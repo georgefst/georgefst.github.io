@@ -1,62 +1,65 @@
 code size summary per package:
 
-aeson-1.4.2.0-6oFZmLVQz2fGtrfaZYcFm5:41723
-base:                    387543
-containers-0.6.0.1-BAqcfV1UBBeCIRjPbUYeSG:22702
-ghc-prim:                34504
-ghcjs-base-0.2.0.0-JozYZ7GHc7JEfhDrWZm3NT:68587
-ghcjs-prim-0.1.1.0-EXzjGVHQlAS2XAXcu0iCbS:4340
-integer-gmp:             2595
+aeson-1.4.2.0-6oFZmLVQz2fGtrfaZYcFm5:41448
+base:                    387527
+containers-0.6.0.1-BAqcfV1UBBeCIRjPbUYeSG:23254
+ghc-prim:                34967
+ghcjs-base-0.2.0.0-JozYZ7GHc7JEfhDrWZm3NT:68108
+ghcjs-prim-0.1.1.0-EXzjGVHQlAS2XAXcu0iCbS:4119
+integer-gmp:             2592
 main:                    38443
-miso-1.6.0.0-BIKrBXAalCmHCL9FedlhiP:73009
-pretty-simple-3.3.0.0-7eDWnB6kIDzGNS6vYmRujr:120920
-prettyprinter-1.7.0-EHgPOhjWctJ7BjsxUsFSrA:11104
+miso-1.6.0.0-BIKrBXAalCmHCL9FedlhiP:81766
+pretty-simple-3.3.0.0-7eDWnB6kIDzGNS6vYmRujr:120707
+prettyprinter-1.7.0-EHgPOhjWctJ7BjsxUsFSrA:11088
 prettyprinter-ansi-terminal-1.1.2-H3J9da6EGBwJVLQYTlQXMQ:2149
 scientific-0.3.6.2-GYzjCtWA1vQ45VE9CYiZoV:577
-text-1.2.3.1-2mMWCa8HNEL4R4p8nnvwO2:13479
+text-1.2.3.1-2mMWCa8HNEL4R4p8nnvwO2:13272
 unordered-containers-0.2.9.0-FFYvp66GotsBzKKo1KOI6a:658
-vector-0.12.0.3-Ljxp3Ug7QBk3GWhyQE0Ewc:20244
+vector-0.12.0.3-Ljxp3Ug7QBk3GWhyQE0Ewc:41271
 
 
 code size per module:
 
 aeson-1.4.2.0-6oFZmLVQz2fGtrfaZYcFm5
-    Data.Aeson.Types.FromJSON:          6533
-    Data.Aeson.Types.Internal:          35190
+    Data.Aeson.Types.FromJSON:          6534
+    Data.Aeson.Types.Internal:          34914
 
 base
-    Control.Exception.Base:             1
-    Data.Either:                        600
-    Data.OldList:                       44415
-    Data.Typeable.Internal:             9944
+    Control.Exception.Base:             1212
+    Data.Char:                          1
+    Data.Either:                        1
+    Data.Functor.Identity:              600
+    Data.OldList:                       44202
+    Data.Typeable.Internal:             9932
     Foreign.C.Error:                    873
     Foreign.Marshal.Alloc:              2644
-    Foreign.Storable:                   2507
+    Foreign.Storable:                   2416
     GHC.Arr:                            4192
     GHC.Base:                           308
-    GHC.Char:                           6144
-    GHC.Conc.Sync:                      8176
+    GHC.Char:                           6141
+    GHC.Conc.Sync:                      8095
     GHC.Enum:                           132
-    GHC.Err:                            7345
+    GHC.Err:                            7362
     GHC.Exception:                      2567
     GHC.Exception.Type:                 5189
     GHC.Fingerprint:                    546
     GHC.Fingerprint.Type:               24499
-    GHC.Float:                          10995
+    GHC.Float:                          10977
     GHC.Foreign:                        160
-    GHC.ForeignPtr:                     1403
+    GHC.ForeignPtr:                     1
+    GHC.Generics:                       1403
     GHC.IO:                             737
     GHC.IO.Buffer:                      1
     GHC.IO.BufferedIO:                  434
-    GHC.IO.Device:                      399
+    GHC.IO.Device:                      396
     GHC.IO.Encoding:                    592
     GHC.IO.Encoding.Failure:            1
-    GHC.IO.Encoding.Types:              58236
-    GHC.IO.Encoding.UTF8:               11555
-    GHC.IO.Exception:                   25610
+    GHC.IO.Encoding.Types:              58218
+    GHC.IO.Encoding.UTF8:               11438
+    GHC.IO.Exception:                   25502
     GHC.IO.FD:                          274
-    GHC.IO.Handle:                      4927
-    GHC.IO.Handle.FD:                   23681
+    GHC.IO.Handle:                      4795
+    GHC.IO.Handle.FD:                   23648
     GHC.IO.Handle.Internals:            1838
     GHC.IO.Handle.Types:                373
     GHC.Int:                            4855
@@ -64,78 +67,78 @@ base
     GHC.MVar:                           113
     GHC.Maybe:                          1121
     GHC.Num:                            113
-    GHC.Ptr:                            9257
+    GHC.Ptr:                            9220
     GHC.Read:                           7130
     GHC.Real:                           1
-    GHC.STRef:                          14564
-    GHC.Show:                           3866
+    GHC.STRef:                          14687
+    GHC.Show:                           3836
     GHC.Stack.CCS:                      488
     GHC.Stack.Types:                    9988
-    GHC.TopHandler:                     2494
+    GHC.TopHandler:                     2393
     GHC.Unicode:                        1
-    GHC.Word:                           3712
-    Numeric:                            13473
-    System.Posix.Internals:             14165
+    GHC.Word:                           3690
+    Numeric:                            13458
+    System.Posix.Internals:             13899
     Text.ParserCombinators.ReadP:       1
-    Text.ParserCombinators.ReadPrec:    526
-    Text.Read:                          36765
+    Text.ParserCombinators.ReadPrec:    506
+    Text.Read:                          36715
     Text.Read.Lex:                      3611
 
 containers-0.6.0.1-BAqcfV1UBBeCIRjPbUYeSG
-    Data.Map.Internal:                  22225
-    Data.Sequence.Internal:             477
+    Data.Map.Internal:                  22186
+    Data.Sequence.Internal:             1068
 
 ghc-prim
-    GHC.CString:                        5560
+    GHC.CString:                        5557
     GHC.Classes:                        139
     GHC.IntWord64:                      1610
     GHC.Tuple:                          125
-    GHC.Types:                          27070
+    GHC.Types:                          27536
 
 ghcjs-base-0.2.0.0-JozYZ7GHc7JEfhDrWZm3NT
     Data.JSString:                      110
     Data.JSString.Internal.Type:        390
-    GHCJS.Foreign.Internal:             27358
+    GHCJS.Foreign.Internal:             27332
     GHCJS.Marshal:                      1
     GHCJS.Marshal.Internal:             291
-    GHCJS.Marshal.Pure:                 591
+    GHCJS.Marshal.Pure:                 1
     JavaScript.Array.Internal:          894
-    JavaScript.Web.AnimationFrame:      38952
+    JavaScript.Web.AnimationFrame:      39089
 
 ghcjs-prim-0.1.1.0-EXzjGVHQlAS2XAXcu0iCbS
-    GHCJS.Prim:                         2481
+    GHCJS.Prim:                         2260
     GHCJS.Prim.Internal:                1859
 
 integer-gmp
-    GHC.Integer.Type:                   2595
+    GHC.Integer.Type:                   2592
 
 main
     Main:                               38443
 
 miso-1.6.0.0-BIKrBXAalCmHCL9FedlhiP
-    Miso:                               1891
-    Miso.Delegate:                      1996
+    Miso:                               1885
+    Miso.Delegate:                      1990
     Miso.Diff:                          1
     Miso.Effect:                        6065
-    Miso.Event.Decoder:                 15863
-    Miso.Event.Types:                   750
+    Miso.Event.Decoder:                 17039
+    Miso.Event.Types:                   1058
     Miso.Html.Element:                  306
-    Miso.Html.Event:                    19458
-    Miso.Html.Internal:                 1038
-    Miso.Html.Property:                 914
-    Miso.String:                        24727
+    Miso.Html.Event:                    19435
+    Miso.Html.Internal:                 3030
+    Miso.Html.Property:                 6260
+    Miso.String:                        24697
 
 pretty-simple-3.3.0.0-7eDWnB6kIDzGNS6vYmRujr
     Text.Pretty.Simple.Internal.Color:  1
     Text.Pretty.Simple.Internal.Expr:   12558
-    Text.Pretty.Simple.Internal.ExprParser:48917
-    Text.Pretty.Simple.Internal.OutputPrinter:59444
+    Text.Pretty.Simple.Internal.ExprParser:48724
+    Text.Pretty.Simple.Internal.OutputPrinter:59424
 
 prettyprinter-1.7.0-EHgPOhjWctJ7BjsxUsFSrA
-    Prettyprinter.Internal:             1253
-    Prettyprinter.Render.Util.Panic:    5771
+    Prettyprinter.Internal:             1252
+    Prettyprinter.Render.Util.Panic:    5757
     Prettyprinter.Render.Util.SimpleDocTree:1
-    Prettyprinter.Symbols.Ascii:        4079
+    Prettyprinter.Symbols.Ascii:        4078
 
 prettyprinter-ansi-terminal-1.1.2-H3J9da6EGBwJVLQYTlQXMQ
     Prettyprinter.Render.Terminal.Internal:2149
@@ -148,8 +151,8 @@ text-1.2.3.1-2mMWCa8HNEL4R4p8nnvwO2
     Data.Text.Array:                    500
     Data.Text.Internal:                 1
     Data.Text.Internal.Fusion.Size:     254
-    Data.Text.Internal.Fusion.Types:    11170
-    Data.Text.Show:                     988
+    Data.Text.Internal.Fusion.Types:    10966
+    Data.Text.Show:                     985
 
 unordered-containers-0.2.9.0-FFYvp66GotsBzKKo1KOI6a
     Data.HashMap.Array:                 426
@@ -157,9 +160,9 @@ unordered-containers-0.2.9.0-FFYvp66GotsBzKKo1KOI6a
 
 vector-0.12.0.3-Ljxp3Ug7QBk3GWhyQE0Ewc
     Data.Vector:                        498
-    Data.Vector.Mutable:                19746
+    Data.Vector.Mutable:                40773
 
 
 
-packed metadata: 331333
+packed metadata: 346184
 
