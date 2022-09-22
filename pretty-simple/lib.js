@@ -1363,10 +1363,10 @@ window['callCreated'] = function callCreated(obj) {
 };
 window['populate'] = function populate(c, n, doc) {
   if (!c) c = {
-              props: null,
-              css: null,
-              children: []
-              }
+    props: null,
+    css: null,
+    children: []
+  }
   window['diffProps'](c['props'], n['props'], n['domRef'], n['ns'] === 'svg');
   window['diffCss'](c['css'], n['css'], n['domRef']);
   window['diffChildren'](c['children'], n['children'], n['domRef'], doc);
@@ -1466,10 +1466,10 @@ window['createNode'] = function createNode(obj, parent, doc) {
 };
 window['syncChildren'] = function syncChildren(os, ns, parent, doc) {
   var oldFirstIndex = 0,
-  newFirstIndex = 0,
-  oldLastIndex = os.length - 1,
-  newLastIndex = ns.length - 1,
-  nFirst, nLast, oLast, oFirst, tmp, found, node;
+    newFirstIndex = 0,
+    oldLastIndex = os.length - 1,
+    newLastIndex = ns.length - 1,
+    nFirst, nLast, oLast, oFirst, tmp, found, node;
   for (;;) {
     if (newFirstIndex > newLastIndex && oldFirstIndex > oldLastIndex) {
       break;
@@ -1570,7 +1570,7 @@ window['delegate'] = function delegate(mountPointElement, events, getVTree) {
   for (var event in events) {
     mountPointElement.addEventListener(events[event][0], function(e) {
       getVTree(function (obj) {
- window['delegateEvent'](e, obj, window['buildTargetToElement'](mountPointElement, e.target), []);
+        window['delegateEvent'](e, obj, window['buildTargetToElement'](mountPointElement, e.target), []);
       });
     }, events[event][1]);
   }
@@ -1587,18 +1587,18 @@ window['delegateEvent'] = function delegateEvent (event, obj, stack, parentStack
     }
   }
   else {
-      var eventObj = obj['events'][event.type];
-      if (eventObj) {
- var options = eventObj.options;
-        if (options['preventDefault'])
-     event.preventDefault();
-        eventObj['runEvent'](event);
-        if (!options['stopPropagation'])
-    window['propogateWhileAble'] (parentStack, event);
-      } else {
- window['propogateWhileAble'] (parentStack, event);
-      }
-   }
+    var eventObj = obj['events'][event.type];
+    if (eventObj) {
+      var options = eventObj.options;
+      if (options['preventDefault'])
+        event.preventDefault();
+      eventObj['runEvent'](event);
+      if (!options['stopPropagation'])
+        window['propogateWhileAble'] (parentStack, event);
+    } else {
+      window['propogateWhileAble'] (parentStack, event);
+    }
+  }
 };
 window['buildTargetToElement'] = function buildTargetToElement (element, target) {
   var stack = [];
@@ -1612,7 +1612,7 @@ window['propogateWhileAble'] = function propogateWhileAble (parentStack, event) 
   for (var i = 0; i < parentStack.length; i++) {
     if (parentStack[i]['events'][event.type]) {
       var eventObj = parentStack[i]['events'][event.type],
-   options = eventObj['options'];
+        options = eventObj['options'];
       if (options['preventDefault']) event.preventDefault();
       eventObj['runEvent'](event);
       if (options['stopPropagation']) break;
@@ -1628,21 +1628,30 @@ window['objectToJSON'] = function objectToJSON (at, obj) {
   }
   for (var i in at) obj = obj[at[i]];
   var newObj;
-  if (obj instanceof Array) {
+  if (obj instanceof Array || ('length' in obj && obj['localName'] !== 'select')) {
     newObj = [];
     for (var i = 0; i < obj.length; i++)
       newObj.push(window['objectToJSON']([], obj[i]));
     return newObj;
   }
   newObj = {};
-  var isInput = obj['localName'] === 'input';
-  for (var i in obj){
-    if (isInput && (i === 'selectionDirection' || i === 'selectionStart' || i === 'selectionEnd'))
+  for (var i in getAllPropertyNames(obj)){
+    if ((obj['localName'] === 'input') && (i === 'selectionDirection' || i === 'selectionStart' || i === 'selectionEnd'))
       continue;
     if (typeof obj[i] == 'string' || typeof obj[i] == 'number' || typeof obj[i] == 'boolean')
       newObj[i] = obj[i];
   }
   return newObj;
+};
+function getAllPropertyNames(obj) {
+  var props = {}, i = 0;
+  do {
+    var names = Object.getOwnPropertyNames(obj);
+    for (i = 0; i < names.length; i++) {
+      props [names[i]] = null;
+    }
+  } while (obj = Object.getPrototypeOf(obj));
+  return props;
 };
 window = typeof window === 'undefined' ? {} : window;
 window['collapseSiblingTextNodes'] = function collapseSiblingTextNodes(vs) {
@@ -1650,8 +1659,8 @@ window['collapseSiblingTextNodes'] = function collapseSiblingTextNodes(vs) {
   var ax = 0, adjusted = vs.length > 0 ? [vs[0]] : [];
   for (var ix = 1; ix < vs.length; ix++) {
     if (adjusted[ax]['type'] === 'vtext' && vs[ix]['type'] === 'vtext') {
- adjusted[ax]['text'] += vs[ix]['text'];
- continue;
+      adjusted[ax]['text'] += vs[ix]['text'];
+      continue;
     }
     adjusted[++ax] = vs[ix];
   }
@@ -1659,26 +1668,26 @@ window['collapseSiblingTextNodes'] = function collapseSiblingTextNodes(vs) {
 }
 window['copyDOMIntoVTree'] = function copyDOMIntoVTree(logLevel,mountPoint, vtree, doc) {
   if (!doc) { doc = window.document; }
-    var mountChildIdx = 0, node;
-    if (!mountPoint) {
- if (doc.body.childNodes.length > 0) {
-     node = doc.body.firstChild;
- } else {
-     node = doc.body.appendChild (doc.createElement('div'));
- }
-    } else if (mountPoint.childNodes.length === 0) {
- node = mountPoint.appendChild (doc.createElement('div'));
+  var mountChildIdx = 0, node;
+  if (!mountPoint) {
+    if (doc.body.childNodes.length > 0) {
+      node = doc.body.firstChild;
     } else {
- while (mountPoint.childNodes[mountChildIdx] && (mountPoint.childNodes[mountChildIdx].nodeType === Node.TEXT_NODE || mountPoint.childNodes[mountChildIdx].localName === 'script')){
-   mountChildIdx++;
- }
- if (!mountPoint.childNodes[mountChildIdx]) {
-     node = doc.body.appendChild (doc.createElement('div'));
- } else {
-     node = mountPoint.childNodes[mountChildIdx];
-        }
+      node = doc.body.appendChild (doc.createElement('div'));
     }
-    if (!window['walk'](logLevel,vtree, node, doc)) {
+  } else if (mountPoint.childNodes.length === 0) {
+    node = mountPoint.appendChild (doc.createElement('div'));
+  } else {
+    while (mountPoint.childNodes[mountChildIdx] && (mountPoint.childNodes[mountChildIdx].nodeType === Node.TEXT_NODE || mountPoint.childNodes[mountChildIdx].localName === 'script')){
+      mountChildIdx++;
+    }
+    if (!mountPoint.childNodes[mountChildIdx]) {
+      node = doc.body.appendChild (doc.createElement('div'));
+    } else {
+      node = mountPoint.childNodes[mountChildIdx];
+    }
+  }
+  if (!window['walk'](logLevel,vtree, node, doc)) {
     if (logLevel) {
       console.warn('Could not copy DOM into virtual DOM, falling back to diff');
     }
@@ -1693,32 +1702,32 @@ window['copyDOMIntoVTree'] = function copyDOMIntoVTree(logLevel,mountPoint, vtre
   return true;
 }
 window['diagnoseError'] = function diagnoseError(logLevel, vtree, node) {
-    if (logLevel) console.warn('VTree differed from node', vtree, node);
+  if (logLevel) console.warn('VTree differed from node', vtree, node);
 }
 window['walk'] = function walk(logLevel, vtree, node, doc) {
   var vdomChild,
-      domChild;
+    domChild;
   vtree['domRef'] = node;
   window['callCreated'](vtree);
   vtree.children = window['collapseSiblingTextNodes'](vtree.children);
   for (var i = 0; i < vtree.children.length; i++) {
     vdomChild = vtree['children'][i];
     domChild = node.childNodes[i];
-      if (!domChild) {
-   window['diagnoseError'](logLevel,vdomChild, domChild);
-   return false;
-      }
+    if (!domChild) {
+      window['diagnoseError'](logLevel,vdomChild, domChild);
+      return false;
+    }
     if (vdomChild.type === 'vtext') {
-        if (domChild.nodeType !== Node.TEXT_NODE) {
-       window['diagnoseError'](logLevel, vdomChild, domChild);
-     return false;
- }
-        if (vdomChild['text'] === domChild.textContent) {
-          vdomChild['domRef'] = domChild;
-        } else {
-          window['diagnoseError'](logLevel, vdomChild, domChild);
-          return false;
- }
+      if (domChild.nodeType !== Node.TEXT_NODE) {
+        window['diagnoseError'](logLevel, vdomChild, domChild);
+        return false;
+      }
+      if (vdomChild['text'] === domChild.textContent) {
+        vdomChild['domRef'] = domChild;
+      } else {
+        window['diagnoseError'](logLevel, vdomChild, domChild);
+        return false;
+      }
     } else {
       if (domChild.nodeType !== Node.ELEMENT_NODE) return false;
       vdomChild['domRef'] = domChild;
