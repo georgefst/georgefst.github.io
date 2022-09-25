@@ -6,12 +6,14 @@ textarea, input, button, select, option { /* don't use the OS/browser style */
 }
 input[type='checkbox'] {
   height: 2rem;
+  width: 2rem;
 }
 input[type='range'] {
   width: 7rem;
 }
 select {
-  padding: 0.5rem
+  padding: 0.5rem;
+  width: 10rem;
 }
 
 :root {
@@ -24,35 +26,42 @@ body {
   accent-color: var(--ui-color);
   caret-color: var(--ui-color);
   font-family: Helvetica, Arial, sans-serif;
-  user-select: none;
 }
 
 .root {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  gap: 2rem;
+  gap: 1rem;
+  padding: 1rem;
 }
 
 .input {
-  resize: none;
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.input-text {
   height: 6rem;
-  padding: 0.5rem;
-  margin: 0.5rem;
+  width: 100%;
+  resize: none;
 }
 
 .opts {
+  user-select: none;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: center;
-  gap: 2rem;
+  gap: 1.5rem;
 }
 .opts > * {
   color: var(--ui-color);
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  align-items: center;
+  gap: 0.2rem;
   text-align: center;
 }
 
