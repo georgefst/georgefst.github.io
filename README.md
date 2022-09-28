@@ -1,4 +1,3 @@
-```sh
-rm -f pretty-simple/*
-cp ~/code/pretty-simple/web/result/bin/web.jsexe/* pretty-simple
-```
+# George's GitHub Pages site
+
+Nothing here right now!
