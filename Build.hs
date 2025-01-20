@@ -33,15 +33,19 @@ import Data.Text.Lazy.IO qualified as TL
 import Data.Tuple.Extra
 import Development.Shake
 import System.FilePath
-import Text.Blaze.Html (Html)
+import Text.Blaze.Html (Html, (!))
 import Text.Blaze.Html.Renderer.Text (renderHtml)
 import Text.Blaze.Html5 qualified as H
+import Text.Blaze.Html5.Attributes qualified as HA
 import Text.Pandoc
 import Text.Pandoc.Walk
 
 main :: IO ()
 main = shakeArgs shakeOpts do
     want [outDir </> "index.html"]
+
+    (outDir <//> stylesheet) %> \p -> do
+        copyFileChanged stylesheet p
 
     (outDir <//> "*" <.> "html") %> \p -> do
         let inFile = inDir </> htmlOutToIn p
@@ -88,4 +92,5 @@ addDocHead :: Text -> Html -> Html
 addDocHead title body = H.docTypeHtml do
     H.head do
         H.title . H.text $ "George Thomas" <> mwhen (not $ T.null title) " - " <> title
+        H.link ! HA.rel "stylesheet" ! HA.href "style.css"
     H.body body
