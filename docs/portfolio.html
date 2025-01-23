@@ -1,0 +1,20 @@
+<!DOCTYPE HTML>
+<html><head><title>George Thomas</title><link rel="stylesheet" href="style.css"></head><body><h2>monpad</h2>
+<iframe
+  id="monpad"
+  title="Monpad"
+  width="400"
+  height="200"
+  src="monpad.html?username=George"
+>
+</iframe>
+<pre id="monpad-output"></pre>
+<script>
+const maxLines = 10
+const outputElement = document.getElementById("monpad-output")
+document.addEventListener("monpad-client-update", e => {
+  outputElement.textContent = outputElement.textContent.split("\n")
+    .slice(-maxLines+1).join("\n")
+    + (outputElement.textContent ? '\n' : '') + e.detail
+})
+</script></body></html>
