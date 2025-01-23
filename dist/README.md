@@ -1,0 +1,1 @@
+This folder contains the actual built static files for the website.
