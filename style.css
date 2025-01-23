@@ -11,6 +11,10 @@ body {
   color: white;
 }
 
+iframe {
+  border-width: 0;
+}
+
 h1,
 h2 {
   color: var(--blue-light);

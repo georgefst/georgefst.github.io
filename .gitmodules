@@ -1,0 +1,3 @@
+[submodule "monpad"]
+	path = monpad
+	url = https://github.com/georgefst/monpad
