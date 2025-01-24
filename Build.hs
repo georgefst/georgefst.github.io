@@ -24,6 +24,7 @@ build-depends:
 
 module Main (main) where
 
+import Control.Monad.Except
 import Control.Monad.Writer
 import Data.Foldable
 import Data.Function
@@ -35,6 +36,8 @@ import Data.Text.IO qualified as T
 import Data.Text.Lazy.IO qualified as TL
 import Data.Tuple.Extra
 import Development.Shake
+import System.Directory
+import System.Exit
 import System.FilePath
 import Text.Blaze.Html (Html, (!))
 import Text.Blaze.Html.Renderer.Text (renderHtml)
@@ -46,7 +49,27 @@ import Text.Pandoc.Walk
 
 main :: IO ()
 main = shakeArgs shakeOpts do
-    want [outDir </> "index.html"]
+    want [rootHtml]
+
+    "release" ~> do
+        need [rootHtml]
+        Stdout (originalBranch :: String) <- cmd ("git branch --show-current" :: String)
+        liftIO $ putStrLn originalBranch
+        either (\e -> liftIO $ putStrLn $ "git command failed: " <> show e) pure =<< runExceptT do
+            let gitCmd c =
+                    lift (cmd @(String -> String -> Action ExitCode) "git" c) >>= \case
+                        ExitSuccess -> pure ()
+                        ExitFailure e' -> throwError (c, e')
+            gitCmd "switch release"
+            gitCmd "merge master --no-edit"
+            liftIO do
+                removeDirectoryRecursive "docs"
+                cmd_ ("cp -r dist docs" :: String) --TODO find a Haskell implementation of this
+                writeFile "docs/CNAME" "georgefst.com"
+            gitCmd "add docs"
+            gitCmd "commit -m Release"
+            gitCmd "push github.io HEAD:georgefst.com"
+        cmd_ $ "git switch " <> originalBranch
 
     (outDir <//> stylesheet) %> \p -> do
         copyFileChanged stylesheet p
@@ -123,6 +146,8 @@ inDir :: FilePath
 inDir = "./content"
 outDir :: FilePath
 outDir = "./dist"
+rootHtml :: FilePath
+rootHtml = outDir </> "index.html"
 stylesheet :: FilePath
 stylesheet = "style.css"
 
