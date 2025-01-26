@@ -107,9 +107,11 @@ main = shakeArgs shakeOpts do
             firstM (writeHtml5 def) . runWriter $
                 doc & walkM \case
                     RawBlock format t -> do
-                        tell . map ((outDir </>) . T.unpack) $
+                        tell $
                             parseTags t & mapMaybe \case
-                                TagOpen _ as -> T.takeWhile (/= '?') . snd <$> find ((== "src") . fst) as
+                                TagOpen _ as ->
+                                    (outDir </>) . T.unpack . T.takeWhile (/= '?') . snd
+                                        <$> find ((== "src") . fst) as
                                 _ -> Nothing
                         pure $ RawBlock format t
                     block ->
