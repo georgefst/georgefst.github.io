@@ -5,6 +5,7 @@ build-depends:
     base,
     blaze-html,
     blaze-markup,
+    containers,
     directory,
     extra,
     filepath,
@@ -19,8 +20,10 @@ build-depends:
 {-# LANGUAGE GHC2021 #-}
 {-# LANGUAGE BlockArguments #-}
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE OverloadedRecordDot #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ViewPatterns #-}
+{-# LANGUAGE NoFieldSelectors #-}
 {-# OPTIONS_GHC -Wall #-}
 
 module Main (main) where
@@ -30,6 +33,8 @@ import Control.Monad.Writer
 import Data.Foldable
 import Data.Function
 import Data.Functor
+import Data.Map (Map)
+import Data.Map qualified as Map
 import Data.Maybe
 import Data.Monoid.Extra
 import Data.Text (Text)
@@ -83,9 +88,8 @@ main = shakeArgs shakeOpts do
             [Cwd "monpad"]
             "./build.sh"
             []
-        command_
-            []
-            "./monpad/dist/monpad"
+        need $ Map.keys monpadLayouts <&> \layout -> monpadLayoutDir </> layout <.> "dhall"
+        command_ [] "./monpad/dist/monpad" $
             [ "dump-html"
             , "--no-ws"
             , "--login"
@@ -93,12 +97,12 @@ main = shakeArgs shakeOpts do
             , "--main"
             , outDir </> "monpad.html"
             , "--json"
-            , "--layout"
-            , "((./monpad/dhall/lib/map-layout.dhall).void ./monpad/dhall/default.dhall)"
-                <> " // "
-                -- TODO DRY with stylesheet - this is `--blue-light`
-                <> "{backgroundColour={red=0.552350,green=0.714858,blue=0.899937,alpha=1.0}}"
             ]
+                <> concatMap (\layout -> ["--layout", layout.dhall]) monpadLayouts
+
+    (monpadLayoutDir </> "*") %> \p ->
+        let layout = fromMaybe (error $ "unknown Monpad layout: " <> p) $ Map.lookup (takeBaseName p) monpadLayouts
+         in copyFileChanged ("./monpad/dhall/" <> layout.path <> ".dhall") p
 
     (outDir <//> "index.html") %> \p -> do
         let inFile = inDir </> htmlOutToIn (joinPath . drop 1 $ splitPath p)
@@ -145,6 +149,34 @@ pandocReaderOpts =
         { readerExtensions = enableExtension Ext_raw_html $ readerExtensions def
         }
 
+data MonpadLayout = MonpadLayout
+    { path :: String
+    , dhall :: String
+    }
+monpadLayouts :: Map String MonpadLayout
+monpadLayouts =
+    Map.fromList $
+        [ dupe "default"
+        , dupe "full"
+        , ("mouse", "mouse-landscape")
+        ]
+            <&> \(name, path) ->
+                ( name
+                , MonpadLayout
+                    { path
+                    , dhall =
+                        "((./monpad/dhall/lib/map-layout.dhall).void ./monpad/dhall/"
+                            <> path
+                            <> ".dhall)"
+                            <> " // "
+                            -- TODO DRY with stylesheet - this is `--blue-light`
+                            <> "{backgroundColour={red=0.552350,green=0.714858,blue=0.899937,alpha=1.0}}"
+                            <> " // {name=\""
+                            <> name
+                            <> "\"}"
+                    }
+                )
+
 inDir :: FilePath
 inDir = "./content"
 outDir :: FilePath
@@ -153,6 +185,8 @@ rootHtml :: FilePath
 rootHtml = outDir </> "index.html"
 stylesheet :: FilePath
 stylesheet = "style.css"
+monpadLayoutDir :: FilePath
+monpadLayoutDir = outDir </> "portfolio/monpad/layouts"
 
 htmlOutToIn :: FilePath -> FilePath
 htmlOutToIn p = case reverse $ splitDirectories p of
