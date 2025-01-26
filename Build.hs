@@ -76,7 +76,7 @@ main = shakeArgs shakeOpts do
     (outDir </> stylesheet) %> \p -> do
         copyFileChanged stylesheet p
 
-    (outDir </> "monpad.html") %> \_ -> do
+    (outDir </> "monpad/index.html") %> \_ -> do
         -- TODO this needs to be re-run when the submodule hash changes
         -- for now we must manually run `./Build.hs dist/monpad.html -B`
         command_
@@ -91,7 +91,7 @@ main = shakeArgs shakeOpts do
             , "--login"
             , "/dev/null"
             , "--main"
-            , outDir </> "monpad.html"
+            , outDir </> "monpad/index.html"
             , "--json"
             , "--layout"
             , "((./monpad/dhall/lib/map-layout.dhall).void ./monpad/dhall/default.dhall)"
@@ -113,6 +113,7 @@ main = shakeArgs shakeOpts do
                                 TagOpen _ as ->
                                     find ((== "src") . fst) as <&> \(_, src) ->
                                         outDir </> T.unpack (T.takeWhile (/= '?') src)
+                                            </> "index.html"
                                 _ -> Nothing
                         pure $ RawBlock format t
                     block ->
