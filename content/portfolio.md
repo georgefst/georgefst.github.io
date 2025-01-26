@@ -5,7 +5,7 @@
   title="Monpad"
   width="400"
   height="200"
-  src="monpad.html?username=George"
+  src="/monpad.html?username=George"
 >
 </iframe>
 
