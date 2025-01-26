@@ -65,7 +65,7 @@ main = shakeArgs shakeOpts do
             gitCmd "merge master --no-edit"
             liftIO do
                 removeDirectoryRecursive "docs"
-                cmd_ ("cp -r dist docs" :: String) --TODO find a Haskell implementation of this
+                cmd_ ("cp -r dist docs" :: String) -- TODO find a Haskell implementation of this
                 writeFile "docs/CNAME" "georgefst.com"
             gitCmd "add docs"
             gitCmd "commit -m Release"
