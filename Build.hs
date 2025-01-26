@@ -72,7 +72,7 @@ main = shakeArgs shakeOpts do
             gitCmd "push github.io HEAD:georgefst.com"
         cmd_ $ "git switch " <> originalBranch
 
-    (outDir <//> stylesheet) %> \p -> do
+    (outDir </> stylesheet) %> \p -> do
         copyFileChanged stylesheet p
 
     (outDir </> "monpad.html") %> \_ -> do
