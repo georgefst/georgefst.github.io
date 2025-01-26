@@ -1,0 +1,139 @@
+<!DOCTYPE HTML>
+<html><head><title>George Thomas</title><link rel="stylesheet" href="/style.css"></head><body><p>EDIT 15/12/2022: Ben Gamari is expecting GHC to become runtime-retargetable by 9.8, which would make most of this obsolete https://www.reddit.com/r/haskell/comments/zk1qs6/comment/j09kcjb/?utm<em>source=share&amp;utm</em>medium=web2x&amp;context=3</p>
+<h1>Build cross-compiling GHC targetting 64-bit ARM Linux, using GHCup</h1>
+<ul>
+<li>Close all other programs to reduce the likelihood of any OOM errors. 16GB seems to be close to the minimum required. Takes about 1hr15.</li>
+<li><code>sudo aura -A aarch64-none-linux-gnu-gcc-9.2-bin</code>
+<ul>
+<li>installs my package from AUR</li>
+<li>needed 9.* as anything later wouldn't work with glibc on Nixos 21.05</li>
+<li>EDIT: now using gcc-12.3 version, built by someone else
+<ul>
+<li>see https://aur.archlinux.org/packages/aarch64-none-linux-gnu-gcc-12.3-bin#comment-992341</li>
+</ul></li>
+</ul></li>
+<li>create <code>build.mk</code> <code>V=0     BUILD_MAN = NO     BUILD_SPHINX_HTML = NO     BUILD_SPHINX_PDF = NO     Stage1Only = YES     HADDOCK_DOCS = NO     BuildFlavour = quick     WITH_TERMINFO = NO     BIGNUM_BACKEND = native</code>
+<ul>
+<li><code>WITH_TERMINFO</code> and <code>BIGNUM_BACKEND</code> are the only difference from GHCup defaults
+<ul>
+<li>https://raw.githubusercontent.com/haskell/ghcup-hs/master/data/build_mk/cross</li>
+<li>I think so anyway - it's not clear to me what the conditional means with <code>BuildFlavour</code></li>
+<li><code>BIGNUM_BACKEND = native</code> should maybe be GHCup default now for cross-compiling since GHC 9.0</li>
+</ul></li>
+<li><code>ghcup compile ghc -v 9.2.7 -b 9.0.2 -x aarch64-none-linux-gnu -c $(pwd)/build.mk</code>
+<ul>
+<li>as of 22/05/2023, this hits a sweet spot
+<ul>
+<li>newer GHCs can't be used with make system</li>
+<li>GHCup doesn't support cross-compiling with Hadrian</li>
+<li>9.6 series isn't quite ready yet</li>
+<li>(annoyingly, 9.2.8 came out mere days later)</li>
+<li>hit build failures with <code>ghcup compile ghc -v 9.4.5 -b 9.0.2 -x aarch64-none-linux-gnu -c $(pwd)/build.mk</code>
+<ul>
+<li>not sure why, and should really open an issue
+<ul>
+<li>but then again, there's the combination of runtime-retargetability and Hadrian on the horizon...</li>
+</ul></li>
+</ul></li>
+</ul></li>
+<li>my first success was with <code>ghcup compile ghc -v 9.2.1 -b 8.10.7 -x aarch64-none-linux-gnu -c $(pwd)/build.mk</code></li>
+</ul></li>
+<li><code>ghcup set ghc aarch64-none-linux-gnu-ghc-9.4.5</code>
+<ul>
+<li>I haven't actually tried this - last time I used TUI and couldn't then unset to test</li>
+<li>or use <code>--set</code>?</li>
+</ul></li>
+</ul></li>
+<li><code>ln -s /syncthing/code/bash/aarch64-none-linux-gnu-cabal ~/.local/bin/</code></li>
+</ul>
+<h1>third-party libs - work through evdev/zlib example</h1>
+<p>I should really just make these proper packages, and possibly even upload to AUR <code>sh cd ~/Desktop # LIBEVDEV_VERSION=1.13.1 LIBEVDEV_VERSION=1.13.3 curl -OL https://www.freedesktop.org/software/libevdev/libevdev-$LIBEVDEV_VERSION.tar.xz tar xf libevdev-$LIBEVDEV_VERSION.tar.xz cd libevdev-$LIBEVDEV_VERSION ./configure --host=aarch64-none-linux-gnu --prefix=/usr/aarch64-none-linux-gnu/ make sudo make install</code> <code>sh cd ~/Desktop # ZLIB_VERSION=1.2.13 ZLIB_VERSION=1.3.1 curl -OL https://www.zlib.net/zlib-$ZLIB_VERSION.tar.gz tar xzf zlib-$ZLIB_VERSION.tar.gz cd zlib-$ZLIB_VERSION CHOST=aarch64-none-linux-gnu ./configure --prefix=/usr/aarch64-none-linux-gnu/ make sudo make install</code> <code>sh cd ~/Desktop CURSES_VERSION=6.4 curl -OL https://invisible-island.net/archives/ncurses/ncurses-$CURSES_VERSION.tar.gz tar xzf ncurses-$CURSES_VERSION.tar.gz cd ncurses-$CURSES_VERSION # without `--enable-overwrite`, headers end up in a prefixed directory where Haskell `terminfo` library can't find them # I'm not quite sure why `--disable-stripping` was needed (18/10/2023), and maybe we can set `STRIP` env var instead ./configure --host=aarch64-none-linux-gnu --prefix=/usr/aarch64-none-linux-gnu --enable-overwrite --disable-stripping make sudo make install</code></p>
+<h2>alternative - "sysroot" approach</h2>
+<ul>
+<li>there are plenty of guides online about this, but it's not the approach I've taken - essentially:
+<ul>
+<li>install any aarch64 libraries you need via the package manager on the Pi e.g. Apt</li>
+<li>copy files from the Pi to create a "sysroot" folder</li>
+</ul></li>
+</ul>
+<h1>to do</h1>
+<ul>
+<li>publish blog / Reddit post ("building a cross-compiling GHC (x86 Arch Linux to Raspberry Pi, without Nix)")
+<ul>
+<li>I commented the skeleton <a href="https://www.reddit.com/r/haskell/comments/ryw1go/comment/hruafla/?utm_source=share&amp;utm_medium=web2x&amp;context=3">here</a>
+<ul>
+<li>and more <a href="https://www.reddit.com/r/haskell/comments/xj6d4n/comment/ip85wj3/?utm_source=share&amp;utm_medium=web2x&amp;context=3">here</a></li>
+<li>plus <a href="https://discourse.haskell.org/t/how-to-build-application-in-arm64-arch-with-a-x86-64-host/7456">here</a></li>
+</ul></li>
+<li>if it all becomes as simple as I'd like (see below) there might not be much to say
+<ul>
+<li>so, background - sitting around for 5 years, publishing this before it hopefully becomes obsolete!</li>
+</ul></li>
+<li>there's a balancing act between making it simple and making it Arch-specific
+<ul>
+<li>if all the magic happens in AUR, people might say "why not use e.g. Nix?"</li>
+</ul></li>
+<li>ask Julian Ospald to proof read</li>
+<li>check I'm not missing anything</li>
+<li>thank bgamari or whoever implemented the aarch64 native code gen</li>
+<li>why not Nix
+<ul>
+<li>documentation rubbish etc.</li>
+<li>echo Matt Parsons - it always causes some issues somewhere</li>
+</ul></li>
+<li>put third-party lib stuff in an appendix?</li>
+</ul></li>
+<li>wiki needs updating: https://gitlab.haskell.org/ghc/ghc/-/wikis/building/preparation/raspberry-pi</li>
+<li>this works so well that perhaps GHC should provide bindists</li>
+<li>aim for GHCup and AUR improvements so that the entire process becomes: <code># I guess this should be `yay` or something unless I can get the toolchains in to the official repos     sudo pacman -S aarch64-none-linux-gnu-toolchain-bin-10.3_2021.07-1-x86_64     ghcup compile ghc -v 9.2.1 -x aarch64-none-linux-gnu --extra-build-opts 'WITH_TERMINFO = NO'</code>
+<ul>
+<li>also publish AUR packages for cross-compiling libevdev, zlib etc. ?
+<ul>
+<li>is Debian a step above here? https://github.com/Spotifyd/spotifyd/pull/122/files</li>
+<li>depend on my <code>gcc</code> package?
+<ul>
+<li>or do we not need to be tied to a version
+<ul>
+<li>actually, I don't think that's an issue as these would be built from source
+<ul>
+<li>we would need to make sure they're rebuilt when compiler is upgraded
+<ul>
+<li>in the way that <code>ghcid</code> should be (but isn't) when libraries it depends on are upgraded</li>
+</ul></li>
+</ul></li>
+</ul></li>
+<li>it does seem a bit weird to have them all tied to my GCC instead of the package in <code>community</code>
+<ul>
+<li>but obviously <em>I</em> can't use that because glibc is too bleeding edge for RPi and sometimes even NixOS
+<ul>
+<li>unless there is some way to compile against an older glibc?</li>
+</ul></li>
+</ul></li>
+</ul></li>
+<li>alternatively, Haskell <code>zlib</code> package has a <code>bundled-c-zlib</code> flag
+<ul>
+<li>investigate
+<ul>
+<li>seems to have been designed for Windows but may well work with cross-compilation</li>
+<li>maybe it isn't actually a great approach: https://github.com/haskell/zlib/issues/22</li>
+<li>added in 2020 (and renamed): https://github.com/haskell/zlib/pull/31</li>
+</ul></li>
+<li>recommend that and provide similar in evdev?</li>
+<li>actually, I've seen this in a few other places now, including Rust <code>openssl</code> lib</li>
+</ul></li>
+</ul></li>
+</ul></li>
+</ul>
+<h1>more deps for <code>spotifyd</code> - I built a lot of Haskell projects without needing these</h1>
+<p>I gave up on this in the end, since Spotifyd failed for other reasons.</p>
+<p>Also OpenSSL 3.0.5 is too old for Raspberry Pi OS as of 02/05/2023. I tried <code>1.1.1</code>, but I couldn't then compile the Rust <code>openssl</code> library, hitting linker failures. I was able to get things to work eventually by using that library's <code>bundled</code> flag. For debugging, note that the failures only occurred when the code in the binary actually uses openssl features (<code>reqwest</code> hello world is enough).</p>
+<p>I'm somewhat curious to know how the bundled version differs, but it's also not really important since <code>3.0.5</code> did build, and only failed at runtime on Pi.</p>
+<p>Weirdly I had to use <code>PKG_CONFIG_ALLOW_CROSS=1</code> to get though one of the dependencies, even though with other projects (<code>evdev-share</code>) it <em>stopped</em> the build from completing (with some unhelpful errors). <code>sh cd ~/Desktop SSL_VERSION=3.0.5 curl -OL https://www.openssl.org/source/openssl-$SSL_VERSION.tar.gz extract openssl-$SSL_VERSION.tar.gz cd openssl-$SSL_VERSION ./Configure linux-aarch64 --cross-compile-prefix=aarch64-none-linux-gnu- --prefix=/usr/aarch64-none-linux-gnu/ make sudo make install</code> <code>sh cd ~/Desktop ASOUND_VERSION=1.2.7 curl -OL https://www.alsa-project.org/files/pub/lib/alsa-lib-$ASOUND_VERSION.tar.bz2 extract alsa-lib-$ASOUND_VERSION.tar.bz2 cd alsa-lib-$ASOUND_VERSION ./configure --host=aarch64-none-linux-gnu --prefix=/usr/aarch64-none-linux-gnu/ make sudo make install</code> <code>sh cd ~/Desktop OGG_VERSION=1.3.5 curl -OL https://downloads.xiph.org/releases/ogg/libogg-$OGG_VERSION.tar.gz extract libogg-$OGG_VERSION.tar.gz cd libogg-$OGG_VERSION ./configure --host=aarch64-none-linux-gnu --prefix=/usr/aarch64-none-linux-gnu/ make sudo make install</code></p>
+<h1>acknowledgements</h1>
+<p>Moritz Julian</p>
+<h1>history (combine with above)</h1>
+<p>docker winter - Rust aarch64 GHC backend aarch64 for RPiOS future - runtime retargetability</p>
+<h1>side note (installing Happy)</h1>
+<p>EDIT: irrelevant - Arch Happy is still too new for GHC 9.10 need <code>cabal install happy-1.20.1.1</code></p>
+<p>there's a common sentiment that Haskell on Arch is a disaster due to dynamic linking it's actually fine as long as you use GHCup for development, and make sure it's directory is first on <code>PATH</code></p>
+<p>this is another thing that I've also posted in various places over the years it could form the basis of another blog post but honestly, there's not much more to say on the matter than that</p></body></html>
