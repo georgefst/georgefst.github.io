@@ -20,6 +20,7 @@ build-depends:
 {-# LANGUAGE BlockArguments #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE ViewPatterns #-}
 {-# OPTIONS_GHC -Wall #-}
 
 module Main (main) where
@@ -98,8 +99,8 @@ main = shakeArgs shakeOpts do
                 <> "{backgroundColour={red=0.552350,green=0.714858,blue=0.899937,alpha=1.0}}"
             ]
 
-    (outDir <//> "*" <.> "html") %> \p -> do
-        let inFile = inDir </> htmlOutToIn p
+    (outDir <//> "index.html") %> \p -> do
+        let inFile = inDir </> htmlOutToIn (joinPath . drop 1 $ splitPath p)
         need [inFile, outDir </> stylesheet]
         (contents, localLinks) <- liftIO $ runIOorExplode do
             doc <- readMarkdown pandocReaderOpts =<< liftIO (T.readFile inFile)
@@ -113,13 +114,12 @@ main = shakeArgs shakeOpts do
                         pure $ RawBlock format t
                     block ->
                         block & walkM \case
-                            Link attrs inlines (url, target) ->
+                            Link attrs inlines (url@(T.unpack -> url'), target) ->
                                 Link attrs inlines . (,target)
                                     <$> if takeExtension (T.unpack url) == ".md"
                                         then do
-                                            let url' = htmlInToOut $ T.unpack url
-                                            tell [outDir </> url']
-                                            pure $ T.pack url'
+                                            tell [outDir </> htmlInToOut url']
+                                            pure $ T.pack $ htmlInToOut' url'
                                         else
                                             pure url
                             x -> pure x
@@ -152,9 +152,22 @@ stylesheet :: FilePath
 stylesheet = "style.css"
 
 htmlOutToIn :: FilePath -> FilePath
-htmlOutToIn p = takeFileName p -<.> "md"
+htmlOutToIn p = case reverse $ splitDirectories p of
+    "index.html" : rest0 -> joinPath (reverse rest) </> dir <.> "md"
+      where
+        (dir, rest) = case rest0 of
+            [] -> root
+            ["."] -> root
+            dir' : rest' -> (dir', rest')
+          where
+            root = ("index", rest0)
+    _ -> error $ "bad HTML output path: " <> p
 htmlInToOut :: FilePath -> FilePath
-htmlInToOut p = takeFileName p -<.> "html"
+htmlInToOut p = htmlInToOut' p </> "index.html"
+htmlInToOut' :: FilePath -> FilePath
+htmlInToOut' p = case splitFileName p of
+    ("./", "index.md") -> "./"
+    (dir, file) -> dir </> dropExtension file
 
 addDocHead :: Text -> Html -> Html
 addDocHead title body = H.docTypeHtml do
