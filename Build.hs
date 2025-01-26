@@ -76,7 +76,7 @@ main = shakeArgs shakeOpts do
     (outDir </> stylesheet) %> \p -> do
         copyFileChanged stylesheet p
 
-    (outDir </> "monpad/index.html") %> \_ -> do
+    (outDir </> "monpad.html") %> \_ -> do
         -- TODO this needs to be re-run when the submodule hash changes
         -- for now we must manually run `./Build.hs dist/monpad.html -B`
         command_
@@ -91,7 +91,7 @@ main = shakeArgs shakeOpts do
             , "--login"
             , "/dev/null"
             , "--main"
-            , outDir </> "monpad/index.html"
+            , outDir </> "monpad.html"
             , "--json"
             , "--layout"
             , "((./monpad/dhall/lib/map-layout.dhall).void ./monpad/dhall/default.dhall)"
@@ -112,8 +112,7 @@ main = shakeArgs shakeOpts do
                             parseTags t & mapMaybe \case
                                 TagOpen _ as ->
                                     find ((== "src") . fst) as <&> \(_, src) ->
-                                        outDir </> T.unpack (T.takeWhile (/= '?') src)
-                                            </> "index.html"
+                                        outDir </> T.unpack (T.dropWhile (== '/') $ T.takeWhile (/= '?') src)
                                 _ -> Nothing
                         pure $ RawBlock format t
                     block ->
@@ -177,5 +176,5 @@ addDocHead :: Text -> Html -> Html
 addDocHead title body = H.docTypeHtml do
     H.head do
         H.title . H.text $ "George Thomas" <> mwhen (not $ T.null title) " - " <> title
-        H.link ! HA.rel "stylesheet" ! HA.href "style.css"
+        H.link ! HA.rel "stylesheet" ! HA.href "/style.css"
     H.body body
