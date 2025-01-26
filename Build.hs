@@ -20,6 +20,7 @@ build-depends:
 {-# LANGUAGE BlockArguments #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE ViewPatterns #-}
 {-# OPTIONS_GHC -Wall #-}
 
 module Main (main) where
@@ -28,6 +29,7 @@ import Control.Monad.Except
 import Control.Monad.Writer
 import Data.Foldable
 import Data.Function
+import Data.Functor
 import Data.Maybe
 import Data.Monoid.Extra
 import Data.Text (Text)
@@ -64,17 +66,17 @@ main = shakeArgs shakeOpts do
             gitCmd "merge master --no-edit"
             liftIO do
                 removeDirectoryRecursive "docs"
-                cmd_ ("cp -r dist docs" :: String) --TODO find a Haskell implementation of this
+                cmd_ ("cp -r dist docs" :: String) -- TODO find a Haskell implementation of this
                 writeFile "docs/CNAME" "georgefst.com"
             gitCmd "add docs"
             gitCmd "commit -m Release"
             gitCmd "push github.io HEAD:georgefst.com"
         cmd_ $ "git switch " <> originalBranch
 
-    (outDir <//> stylesheet) %> \p -> do
+    (outDir </> stylesheet) %> \p -> do
         copyFileChanged stylesheet p
 
-    (outDir </> "monpad.html") %> \_ -> do
+    (outDir </> "monpad/index.html") %> \_ -> do
         -- TODO this needs to be re-run when the submodule hash changes
         -- for now we must manually run `./Build.hs dist/monpad.html -B`
         command_
@@ -89,7 +91,7 @@ main = shakeArgs shakeOpts do
             , "--login"
             , "/dev/null"
             , "--main"
-            , outDir </> "monpad.html"
+            , outDir </> "monpad/index.html"
             , "--json"
             , "--layout"
             , "((./monpad/dhall/lib/map-layout.dhall).void ./monpad/dhall/default.dhall)"
@@ -98,28 +100,30 @@ main = shakeArgs shakeOpts do
                 <> "{backgroundColour={red=0.552350,green=0.714858,blue=0.899937,alpha=1.0}}"
             ]
 
-    (outDir <//> "*" <.> "html") %> \p -> do
-        let inFile = inDir </> htmlOutToIn p
+    (outDir <//> "index.html") %> \p -> do
+        let inFile = inDir </> htmlOutToIn (joinPath . drop 1 $ splitPath p)
         need [inFile, outDir </> stylesheet]
         (contents, localLinks) <- liftIO $ runIOorExplode do
             doc <- readMarkdown pandocReaderOpts =<< liftIO (T.readFile inFile)
             firstM (writeHtml5 def) . runWriter $
                 doc & walkM \case
                     RawBlock format t -> do
-                        tell . map ((outDir </>) . T.unpack) $
+                        tell $
                             parseTags t & mapMaybe \case
-                                TagOpen _ as -> T.takeWhile (/= '?') . snd <$> find ((== "src") . fst) as
+                                TagOpen _ as ->
+                                    find ((== "src") . fst) as <&> \(_, src) ->
+                                        outDir </> T.unpack (T.takeWhile (/= '?') src)
+                                            </> "index.html"
                                 _ -> Nothing
                         pure $ RawBlock format t
                     block ->
                         block & walkM \case
-                            Link attrs inlines (url, target) ->
+                            Link attrs inlines (url@(T.unpack -> url'), target) ->
                                 Link attrs inlines . (,target)
                                     <$> if takeExtension (T.unpack url) == ".md"
                                         then do
-                                            let url' = htmlInToOut $ T.unpack url
-                                            tell [outDir </> url']
-                                            pure $ T.pack url'
+                                            tell [outDir </> htmlInToOut url']
+                                            pure $ T.pack $ htmlInToOut' url'
                                         else
                                             pure url
                             x -> pure x
@@ -152,9 +156,22 @@ stylesheet :: FilePath
 stylesheet = "style.css"
 
 htmlOutToIn :: FilePath -> FilePath
-htmlOutToIn p = takeFileName p -<.> "md"
+htmlOutToIn p = case reverse $ splitDirectories p of
+    "index.html" : rest0 -> joinPath (reverse rest) </> dir <.> "md"
+      where
+        (dir, rest) = case rest0 of
+            [] -> root
+            ["."] -> root
+            dir' : rest' -> (dir', rest')
+          where
+            root = ("index", rest0)
+    _ -> error $ "bad HTML output path: " <> p
 htmlInToOut :: FilePath -> FilePath
-htmlInToOut p = takeFileName p -<.> "html"
+htmlInToOut p = htmlInToOut' p </> "index.html"
+htmlInToOut' :: FilePath -> FilePath
+htmlInToOut' p = case splitFileName p of
+    ("./", "index.md") -> "./"
+    (dir, file) -> dir </> dropExtension file
 
 addDocHead :: Text -> Html -> Html
 addDocHead title body = H.docTypeHtml do
