@@ -29,6 +29,7 @@ import Control.Monad.Except
 import Control.Monad.Writer
 import Data.Foldable
 import Data.Function
+import Data.Functor
 import Data.Maybe
 import Data.Monoid.Extra
 import Data.Text (Text)
@@ -110,8 +111,8 @@ main = shakeArgs shakeOpts do
                         tell $
                             parseTags t & mapMaybe \case
                                 TagOpen _ as ->
-                                    (outDir </>) . T.unpack . T.takeWhile (/= '?') . snd
-                                        <$> find ((== "src") . fst) as
+                                    find ((== "src") . fst) as <&> \(_, src) ->
+                                        outDir </> T.unpack (T.takeWhile (/= '?') src)
                                 _ -> Nothing
                         pure $ RawBlock format t
                     block ->
