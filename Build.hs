@@ -206,7 +206,7 @@ rootHtml = outDir </> "index.html"
 stylesheet :: FilePath
 stylesheet = "style.css"
 stylesheetClay :: FilePath
-stylesheetClay = "clay.css"
+stylesheetClay = "generated.css"
 monpadLayoutDir :: FilePath
 monpadLayoutDir = outDir </> "portfolio/monpad/layouts"
 
