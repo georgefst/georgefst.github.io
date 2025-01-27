@@ -44,6 +44,7 @@
 <script>
 const maxLines = 10
 const outputElement = document.getElementById("monpad-output")
+const layoutElement = document.getElementById("monpad-layout")
 document.addEventListener("monpad-client-update", e => {
   outputElement.textContent = outputElement.textContent.split("\n")
     .slice(-maxLines+1).join("\n")
@@ -52,7 +53,7 @@ document.addEventListener("monpad-client-update", e => {
 window.sendMonpadUpdate = detail => document.dispatchEvent(new CustomEvent("monpad-server-update", {detail}))
 window.setMonpadLayout = s => {
   window.fetch(`/portfolio/monpad/layouts/${s}.dhall`).then(r => r.text().then(t => {
-    document.getElementById("monpad-layout").textContent = t
+    layoutElement.textContent = t
   }))
   // TODO eventually Monpad will have a Haskell Wasm frontend which will support Dhall input directly
   // then we can support actual freeform user input, and use `SetLayout` instead of `SwitchLayout`
