@@ -1,9 +1,3 @@
-:root {
-  --blue-dark: #112c4a;
-  --blue-medium: #2a6fbd;
-  --blue-light: #8db6e5;
-}
-
 #monpad-grid {
   background-color: var(--blue-medium);
   display: grid;

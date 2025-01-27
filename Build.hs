@@ -5,6 +5,8 @@ build-depends:
     base,
     blaze-html,
     blaze-markup,
+    clay,
+    colour,
     containers,
     directory,
     extra,
@@ -30,8 +32,14 @@ build-depends:
 
 module Main (main) where
 
+import Clay qualified
+import Clay.Pseudo qualified
 import Control.Monad.Except
 import Control.Monad.Writer
+import Data.Colour
+import Data.Colour.RGBSpace
+import Data.Colour.RGBSpace.HSL
+import Data.Colour.SRGB
 import Data.Foldable
 import Data.Function
 import Data.Functor
@@ -84,6 +92,13 @@ main = shakeArgs shakeOpts do
     (outDir </> stylesheet) %> \p -> do
         copyFileChanged stylesheet p
 
+    (outDir </> stylesheetClay) %> \p -> liftIO $ TL.writeFile p $ Clay.render do
+        Clay.star Clay.# Clay.Pseudo.root Clay.? do
+            -- TODO add support for CSS custom properties (a.k.a. variables) to Clay
+            "--blue-dark" Clay.-: T.pack (sRGB24show blueDark)
+            "--blue-medium" Clay.-: T.pack (sRGB24show blueMedium)
+            "--blue-light" Clay.-: T.pack (sRGB24show blueLight)
+
     (outDir </> "monpad.html") %> \_ -> do
         -- TODO this needs to be re-run when the submodule hash changes
         -- for now we must manually run `./Build.hs dist/monpad.html -B`
@@ -109,7 +124,7 @@ main = shakeArgs shakeOpts do
 
     (outDir <//> "index.html") %> \p -> do
         let inFile = inDir </> htmlOutToIn (joinPath . drop 1 $ splitPath p)
-        need [inFile, outDir </> stylesheet]
+        need [inFile, outDir </> stylesheet, outDir </> stylesheetClay]
         (contents, localLinks) <- liftIO $ runIOorExplode do
             doc <- readMarkdown pandocReaderOpts =<< liftIO (T.readFile inFile)
             firstM (writeHtml5 def) . runWriter $
@@ -170,10 +185,13 @@ monpadLayouts =
                         T.unpack
                             let p = T.pack path
                                 n = T.pack name
+                                c = toSRGB blueLight
+                                r = T.pack $ show $ channelRed c
+                                g = T.pack $ show $ channelGreen c
+                                b = T.pack $ show $ channelBlue c
                              in [text|
                                     ((./monpad/dhall/lib/map-layout.dhall).void ./monpad/dhall/$p.dhall)
-                                    -- TODO DRY with stylesheet - this is `--blue-light`
-                                    // {backgroundColour={red=0.552350,green=0.714858,blue=0.899937,alpha=1.0}}
+                                    // {backgroundColour={red=$r,green=$g,blue=$b,alpha=1.0}}
                                     // {name="$n"}
                                 |]
                     }
@@ -187,8 +205,20 @@ rootHtml :: FilePath
 rootHtml = outDir </> "index.html"
 stylesheet :: FilePath
 stylesheet = "style.css"
+stylesheetClay :: FilePath
+stylesheetClay = "clay.css"
 monpadLayoutDir :: FilePath
 monpadLayoutDir = outDir </> "portfolio/monpad/layouts"
+
+blueDark, blueMedium, blueLight :: Colour Double
+blueDark = sRGB24read "#112c4a"
+(blueMedium, blueLight) =
+    both
+        (flip lighten blueDark)
+        -- N.B. `0 / 3` would be `blueDark`, and `3 / 3` pure white
+        ( 1 / 3
+        , 2 / 3
+        )
 
 htmlOutToIn :: FilePath -> FilePath
 htmlOutToIn p = case reverse $ splitDirectories p of
@@ -213,4 +243,18 @@ addDocHead title body = H.docTypeHtml do
     H.head do
         H.title . H.text $ "George Thomas" <> mwhen (not $ T.null title) " - " <> title
         H.link ! HA.rel "stylesheet" ! HA.href (H.preEscapedStringValue stylesheet)
+        H.link ! HA.rel "stylesheet" ! HA.href (H.preEscapedStringValue stylesheetClay)
     H.body body
+
+-- TODO upstream these, or use as the basis of a library, maybe with optics
+adjustHSL ::
+    (Double -> Double) ->
+    (Double -> Double) ->
+    (Double -> Double) ->
+    Colour Double ->
+    Colour Double
+adjustHSL fh fs fl c = let (h, s, l) = hslView $ toSRGB c in uncurryRGB sRGB $ hsl (fh h) (fs s) (fl l)
+adjustLightness :: (Double -> Double) -> Colour Double -> Colour Double
+adjustLightness f = adjustHSL id id f
+lighten :: Double -> Colour Double -> Colour Double
+lighten x = adjustLightness (\l -> l + (1 - l) * x)
