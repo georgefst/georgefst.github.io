@@ -1,32 +1,24 @@
 ## Monpad
 
-<ul>
-  <li>
-    <button onclick='window.setMonpadLayout("default")'>
-      default layout
-    </button>
-  </li>
-  <li>
-    <button onclick='window.setMonpadLayout("full")'>
-      full gamepad layout
-    </button>
-  </li>
-  <li>
-    <button onclick='window.setMonpadLayout("mouse")'>
-      mouse layout
-    </button>
-  </li>
-  <li>
-    <button onclick='window.sendMonpadUpdate({"ShowElement": "Red"})'>
-      show red button
-    </button>
-  </li>
-  <li>
-    <button onclick='window.sendMonpadUpdate({"HideElement": "Red"})'>
-      hide red button
-    </button>
-  </li>
-</ul>
+<div id="monpad-grid">
+
+<div id="monpad-buttons">
+  <button onclick='window.setMonpadLayout("default")'>
+    default layout
+  </button>
+  <button onclick='window.setMonpadLayout("full")'>
+    full gamepad layout
+  </button>
+  <button onclick='window.setMonpadLayout("mouse")'>
+    mouse layout
+  </button>
+  <button onclick='window.sendMonpadUpdate({"ShowElement": "Red"})'>
+    show red button
+  </button>
+  <button onclick='window.sendMonpadUpdate({"HideElement": "Red"})'>
+    hide red button
+  </button>
+</div>
 
 <iframe
   id="monpad"
@@ -37,9 +29,13 @@
 >
 </iframe>
 
-<pre id="monpad-output"></pre>
-
+<div class="wrapper">
 <pre id="monpad-layout"></pre>
+</div>
+
+<div class="wrapper">
+<pre id="monpad-output"></pre>
+</div>
 
 <script>
 const maxLines = 10
