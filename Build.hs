@@ -212,5 +212,5 @@ addDocHead :: Text -> Html -> Html
 addDocHead title body = H.docTypeHtml do
     H.head do
         H.title . H.text $ "George Thomas" <> mwhen (not $ T.null title) " - " <> title
-        H.link ! HA.rel "stylesheet" ! HA.href "/style.css"
+        H.link ! HA.rel "stylesheet" ! HA.href (H.preEscapedStringValue stylesheet)
     H.body body
