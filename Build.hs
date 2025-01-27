@@ -124,7 +124,7 @@ main = shakeArgs shakeOpts do
 
     (outDir <//> "index.html") %> \p -> do
         let inFile = inDir </> htmlOutToIn (joinPath . drop 1 $ splitPath p)
-        need [inFile, outDir </> stylesheet, outDir </> stylesheetClay]
+        need [inFile]
         (contents, localLinks) <- liftIO $ runIOorExplode do
             doc <- readMarkdown pandocReaderOpts =<< liftIO (T.readFile inFile)
             firstM (writeHtml5 def) . runWriter $
@@ -149,7 +149,7 @@ main = shakeArgs shakeOpts do
                                             pure url
                             x -> pure x
         need localLinks
-        liftIO $ TL.writeFile p . renderHtml $ addDocHead "" contents
+        liftIO . TL.writeFile p . renderHtml =<< addDocHead "" contents
 
 shakeOpts :: ShakeOptions
 shakeOpts =
@@ -238,13 +238,16 @@ htmlInToOut' p = case splitFileName p of
     ("./", "index.md") -> "./"
     (dir, file) -> dir </> dropExtension file
 
-addDocHead :: Text -> Html -> Html
-addDocHead title body = H.docTypeHtml do
-    H.head do
-        H.title . H.text $ "George Thomas" <> mwhen (not $ T.null title) " - " <> title
-        H.link ! HA.rel "stylesheet" ! HA.href (H.preEscapedStringValue stylesheet)
-        H.link ! HA.rel "stylesheet" ! HA.href (H.preEscapedStringValue stylesheetClay)
-    H.body body
+addDocHead :: Text -> Html -> Action Html
+addDocHead title body = do
+    need $ map (outDir </>) stylesheets
+    pure $ H.docTypeHtml do
+        H.head do
+            H.title . H.text $ "George Thomas" <> mwhen (not $ T.null title) " - " <> title
+            for_ stylesheets \s -> H.link ! HA.rel "stylesheet" ! HA.href (H.preEscapedStringValue s)
+        H.body body
+  where
+    stylesheets = [stylesheet, stylesheetClay]
 
 -- TODO upstream these, or use as the basis of a library, maybe with optics
 adjustHSL ::
