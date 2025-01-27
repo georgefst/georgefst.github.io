@@ -55,4 +55,5 @@ window.setMonpadLayout = s => {
   // then we can support actual freeform user input, and use `SetLayout` instead of `SwitchLayout`
   window.sendMonpadUpdate({"SwitchLayout": `${s}`})
 }
+window.setMonpadLayout("default")
 </script>
