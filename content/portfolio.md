@@ -30,11 +30,11 @@
 </iframe>
 
 <div class="wrapper">
-<pre id="monpad-layout"></pre>
+  <pre id="monpad-layout"></pre>
 </div>
 
 <div class="wrapper">
-<pre id="monpad-output"></pre>
+  <pre id="monpad-output"></pre>
 </div>
 
 <script>
