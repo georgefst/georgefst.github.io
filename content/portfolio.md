@@ -46,9 +46,10 @@ document.addEventListener("monpad-client-update", e => {
     .slice(-maxLines+1).join("\n")
     + (outputElement.textContent ? '\n' : '') + e.detail
 })
+window.resolveRelativeURL = s => new URL(s, document.URL + "/")
 window.sendMonpadUpdate = detail => document.dispatchEvent(new CustomEvent("monpad-server-update", {detail}))
 window.setMonpadLayout = s => {
-  window.fetch(`/portfolio/monpad/layouts/${s}.dhall`).then(r => r.text().then(t => {
+  window.fetch(resolveRelativeURL(`monpad/layouts/${s}.dhall`)).then(r => r.text().then(t => {
     layoutElement.textContent = t
   }))
   // TODO eventually Monpad will have a Haskell Wasm frontend which will support Dhall input directly
