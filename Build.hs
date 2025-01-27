@@ -10,6 +10,7 @@ build-depends:
     extra,
     filepath,
     mtl,
+    neat-interpolation,
     pandoc-types,
     pandoc,
     pretty-simple,
@@ -22,6 +23,7 @@ build-depends:
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedRecordDot #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE ViewPatterns #-}
 {-# LANGUAGE NoFieldSelectors #-}
 {-# OPTIONS_GHC -Wall #-}
@@ -43,6 +45,7 @@ import Data.Text.IO qualified as T
 import Data.Text.Lazy.IO qualified as TL
 import Data.Tuple.Extra
 import Development.Shake
+import NeatInterpolation
 import System.Directory
 import System.Exit
 import System.FilePath
@@ -130,7 +133,6 @@ main = shakeArgs shakeOpts do
                                         else
                                             pure url
                             x -> pure x
-
         need localLinks
         liftIO $ TL.writeFile p . renderHtml $ addDocHead "" contents
 
@@ -165,15 +167,15 @@ monpadLayouts =
                 , MonpadLayout
                     { path
                     , dhall =
-                        "((./monpad/dhall/lib/map-layout.dhall).void ./monpad/dhall/"
-                            <> path
-                            <> ".dhall)"
-                            <> " // "
-                            -- TODO DRY with stylesheet - this is `--blue-light`
-                            <> "{backgroundColour={red=0.552350,green=0.714858,blue=0.899937,alpha=1.0}}"
-                            <> " // {name=\""
-                            <> name
-                            <> "\"}"
+                        T.unpack
+                            let p = T.pack path
+                                n = T.pack name
+                             in [text|
+                                    ((./monpad/dhall/lib/map-layout.dhall).void ./monpad/dhall/$p.dhall)
+                                    -- TODO DRY with stylesheet - this is `--blue-light`
+                                    // {backgroundColour={red=0.552350,green=0.714858,blue=0.899937,alpha=1.0}}
+                                    // {name="$n"}
+                                |]
                     }
                 )
 
