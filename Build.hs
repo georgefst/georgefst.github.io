@@ -130,7 +130,6 @@ main = shakeArgs shakeOpts do
                                         else
                                             pure url
                             x -> pure x
-
         need localLinks
         liftIO $ TL.writeFile p . renderHtml $ addDocHead "" contents
 
