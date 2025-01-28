@@ -52,6 +52,7 @@ import Data.Foldable
 import Data.Function
 import Data.Functor
 import Data.Hashable
+import Data.List.Extra
 import Data.Map (Map)
 import Data.Map qualified as Map
 import Data.Maybe
@@ -149,8 +150,8 @@ main = shakeArgs shakeOpts do
         when (p `equalFilePath` (outDir </> "index.html")) $
             need $
                 sidebarLinks & mapMaybe \(p', _) ->
-                    guard (p' /= "/") -- avoids recursive dependency
-                        $> (outDir <> p' </> "index.html")
+                    guard (notNull p') -- avoids recursive dependency
+                        $> (outDir </> p' </> "index.html")
         (contents, localLinks) <- liftIO $ runIOorExplode do
             doc <- readMarkdown pandocReaderOpts =<< liftIO (T.readFile inFile)
             firstM (writeHtml5 def) . runWriter $
@@ -279,10 +280,10 @@ addDocHead title body = do
 
 sidebarLinks :: [(FilePath, String)]
 sidebarLinks =
-    [ ("/", "Home")
-    , ("/blog", "Blog")
-    , ("/portfolio", "Portfolio")
-    , ("/work", "Hire me!")
+    [ ("", "Home")
+    , ("blog", "Blog")
+    , ("portfolio", "Portfolio")
+    , ("work", "Hire me!")
     ]
 
 addCommonHtml :: Html -> Action Html
@@ -293,7 +294,7 @@ addCommonHtml body = do
             H.img ! HA.src (H.stringValue profilePic)
             sequence_ $
                 sidebarLinks <&> \(p, t) ->
-                    H.a (H.string t) ! HA.href (H.stringValue p) ! HA.class_ "button-link"
+                    H.a (H.string t) ! HA.href (H.stringValue ("/" <> p)) ! HA.class_ "button-link"
         H.div body ! HA.id "content"
 
 -- TODO upstream these, or use as the basis of a library, maybe with optics
