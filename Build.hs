@@ -116,7 +116,7 @@ main = shakeArgs shakeOpts do
         cmd_ @(String -> _ -> String -> _)
             "magick"
             profilePic
-            "-crop 1024x1024+320+56 -resize 256x256"
+            "-crop 1024x1024+320+56 -resize 512x512 -quality 90"
             p
 
     (outDir </> "monpad.html") %> \_ -> do
@@ -239,7 +239,7 @@ stylesheet = "style.css"
 stylesheetClay :: FilePath
 stylesheetClay = "generated.css"
 profilePic :: FilePath
-profilePic = "me.jpg"
+profilePic = "me.avif"
 monpadLayoutDir :: FilePath
 monpadLayoutDir = outDir </> "portfolio/monpad/layouts"
 
