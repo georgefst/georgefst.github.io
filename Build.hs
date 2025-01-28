@@ -82,7 +82,7 @@ main = shakeArgs shakeOpts do
 
     "release" ~> do
         need [rootHtml]
-        Stdout (originalBranch :: String) <- cmd ("git branch --show-current" :: String)
+        Stdout originalBranch <- cmd ("git branch --show-current" :: String)
         liftIO $ putStrLn originalBranch
         either (\e -> liftIO $ putStrLn $ "git command failed: " <> show e) pure =<< runExceptT do
             let gitCmd c =
