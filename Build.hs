@@ -130,7 +130,7 @@ main = shakeArgs shakeOpts do
             ]
                 <> concatMap (\layout -> ["--layout", layout.dhall]) monpadLayouts
 
-    (monpadLayoutDir </> "*") %> \p ->
+    (monpadLayoutDir </> "*" <.> "dhall") %> \p ->
         let layout = fromMaybe (error $ "unknown Monpad layout: " <> p) $ Map.lookup (takeBaseName p) monpadLayouts
          in copyFileChanged ("./monpad/dhall/" <> layout.path <> ".dhall") p
 
