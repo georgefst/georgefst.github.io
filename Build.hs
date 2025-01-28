@@ -75,7 +75,7 @@ main = shakeArgs shakeOpts do
         liftIO $ putStrLn originalBranch
         either (\e -> liftIO $ putStrLn $ "git command failed: " <> show e) pure =<< runExceptT do
             let gitCmd c =
-                    lift (cmd @(String -> String -> Action ExitCode) "git" c) >>= \case
+                    lift (cmd @(String -> String -> _) "git" c) >>= \case
                         ExitSuccess -> pure ()
                         ExitFailure e' -> throwError (c, e')
             gitCmd "switch release"
