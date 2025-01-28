@@ -253,7 +253,7 @@ addDocHead title body = do
     pure $ H.docTypeHtml do
         H.head do
             H.title . H.text $ "George Thomas" <> mwhen (not $ T.null title) " - " <> title
-            for_ stylesheets \s -> H.link ! HA.rel "stylesheet" ! HA.href (H.preEscapedStringValue s)
+            for_ stylesheets \s -> H.link ! HA.rel "stylesheet" ! HA.href (H.stringValue s)
         H.body body
   where
     stylesheets = [stylesheet, stylesheetClay]
