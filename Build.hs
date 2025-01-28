@@ -40,6 +40,7 @@ module Main (main) where
 import Clay qualified
 import Clay.Pseudo qualified
 import Control.DeepSeq
+import Control.Monad
 import Control.Monad.Except
 import Control.Monad.Writer
 import Data.Binary
@@ -109,6 +110,8 @@ main = shakeArgs shakeOpts do
             "--blue-medium" Clay.-: T.pack (sRGB24show blueMedium)
             "--blue-light" Clay.-: T.pack (sRGB24show blueLight)
 
+    (outDir </> profilePic) %> copyFileChanged profilePic
+
     (outDir </> "monpad.html") %> \_ -> do
         _ <- getSubmoduleState $ Submodule "monpad"
         command_
@@ -134,6 +137,20 @@ main = shakeArgs shakeOpts do
     (outDir <//> "index.html") %> \p -> do
         let inFile = inDir </> htmlOutToIn (joinPath . drop 1 $ splitPath p)
         need [inFile]
+        -- TODO this is a bit of a hack
+        -- we can't make every page that uses the sidebar depend on all of its link targets
+        -- as that would cause dependency cycles
+        -- so instead we register the dependency only for the root
+        -- this means that we _can_ end up with pages that are reachable but outdated
+        -- but only in the rare event that we specifically request just a single non-root page from the command line
+        -- we'll likely revisit this at some point if we end up with mutually-linked markdown sources
+        -- which should be fine in principle, but will hit the same problem
+        -- the answer _might_ just be to stop being clever and always compile all HTML files
+        when (p `equalFilePath` (outDir </> "index.html")) $
+            need $
+                sidebarLinks & mapMaybe \(p', _) ->
+                    guard (p' /= "/") -- avoids recursive dependency
+                        $> (outDir <> p' </> "index.html")
         (contents, localLinks) <- liftIO $ runIOorExplode do
             doc <- readMarkdown pandocReaderOpts =<< liftIO (T.readFile inFile)
             firstM (writeHtml5 def) . runWriter $
@@ -158,7 +175,7 @@ main = shakeArgs shakeOpts do
                                             pure url
                             x -> pure x
         need localLinks
-        liftIO . TL.writeFile p . renderHtml =<< addDocHead "" contents
+        liftIO . TL.writeFile p . renderHtml =<< addCommonHtml =<< addDocHead "" contents
 
 shakeOpts :: ShakeOptions
 shakeOpts =
@@ -216,6 +233,8 @@ stylesheet :: FilePath
 stylesheet = "style.css"
 stylesheetClay :: FilePath
 stylesheetClay = "generated.css"
+profilePic :: FilePath
+profilePic = "me.jpg"
 monpadLayoutDir :: FilePath
 monpadLayoutDir = outDir </> "portfolio/monpad/layouts"
 
@@ -257,6 +276,25 @@ addDocHead title body = do
         H.body body
   where
     stylesheets = [stylesheet, stylesheetClay]
+
+sidebarLinks :: [(FilePath, String)]
+sidebarLinks =
+    [ ("/", "Home")
+    , ("/blog", "Blog")
+    , ("/portfolio", "Portfolio")
+    , ("/work", "Hire me!")
+    ]
+
+addCommonHtml :: Html -> Action Html
+addCommonHtml body = do
+    need [outDir </> profilePic]
+    pure do
+        (H.div ! HA.id "sidebar") do
+            H.img ! HA.src (H.stringValue profilePic)
+            sequence_ $
+                sidebarLinks <&> \(p, t) ->
+                    H.a (H.string t) ! HA.href (H.stringValue p) ! HA.class_ "button-link"
+        H.div body ! HA.id "content"
 
 -- TODO upstream these, or use as the basis of a library, maybe with optics
 adjustHSL ::
