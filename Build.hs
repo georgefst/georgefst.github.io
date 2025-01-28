@@ -78,6 +78,8 @@ main :: IO ()
 main = shakeArgs shakeOpts do
     want [rootHtml]
 
+    getSubmoduleState <- addSubmoduleOracle
+
     "release" ~> do
         need [rootHtml]
         Stdout (originalBranch :: String) <- cmd ("git branch --show-current" :: String)
@@ -107,11 +109,6 @@ main = shakeArgs shakeOpts do
             "--blue-dark" Clay.-: T.pack (sRGB24show blueDark)
             "--blue-medium" Clay.-: T.pack (sRGB24show blueMedium)
             "--blue-light" Clay.-: T.pack (sRGB24show blueLight)
-
-    getSubmoduleState <- addOracle $ \(Submodule p) ->
-        (,)
-            <$> (fromStdout <$> cmd (Cwd p) ("git rev-parse HEAD" :: String))
-            <*> (fromStdout <$> cmd (Cwd p) ("git diff" :: String))
 
     (outDir </> "monpad.html") %> \_ -> do
         _ <- getSubmoduleState $ Submodule "monpad"
@@ -172,9 +169,6 @@ shakeOpts =
         , shakeThreads = 4
         , shakeLint = Just LintBasic
         }
-
-newtype Submodule = Submodule FilePath deriving newtype (Eq, Ord, Show, Typeable, NFData, Hashable, Binary)
-type instance RuleResult Submodule = (String, String)
 
 pandocReaderOpts :: ReaderOptions
 pandocReaderOpts =
@@ -277,3 +271,12 @@ adjustLightness :: (Double -> Double) -> Colour Double -> Colour Double
 adjustLightness f = adjustHSL id id f
 lighten :: Double -> Colour Double -> Colour Double
 lighten x = adjustLightness (\l -> l + (1 - l) * x)
+
+-- TODO turn this in to a library?
+newtype Submodule = Submodule FilePath deriving newtype (Eq, Ord, Show, Typeable, NFData, Hashable, Binary)
+type instance RuleResult Submodule = (String, String)
+addSubmoduleOracle :: Rules (Submodule -> Action (String, String))
+addSubmoduleOracle = addOracle $ \(Submodule p) ->
+    (,)
+        <$> (fromStdout <$> cmd (Cwd p) ("git rev-parse HEAD" :: String))
+        <*> (fromStdout <$> cmd (Cwd p) ("git diff" :: String))
