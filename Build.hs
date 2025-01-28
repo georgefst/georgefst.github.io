@@ -313,7 +313,8 @@ lighten x = adjustLightness (\l -> l + (1 - l) * x)
 newtype Submodule = Submodule FilePath deriving newtype (Eq, Ord, Show, Typeable, NFData, Hashable, Binary)
 type instance RuleResult Submodule = (String, String)
 addSubmoduleOracle :: Rules (Submodule -> Action (String, String))
-addSubmoduleOracle = addOracle $ \(Submodule p) -> quietly $
-    (,)
-        <$> (fromStdout <$> command [Cwd p] "git" ["rev-parse", "HEAD"])
-        <*> (fromStdout <$> command [Cwd p] "git" ["diff"])
+addSubmoduleOracle = addOracle $ \(Submodule p) ->
+    quietly $
+        (,)
+            <$> (fromStdout <$> command [Cwd p] "git" ["rev-parse", "HEAD"])
+            <*> (fromStdout <$> command [Cwd p] "git" ["diff"])
