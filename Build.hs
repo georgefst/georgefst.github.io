@@ -113,7 +113,11 @@ main = shakeArgs shakeOpts do
     (outDir </> profilePic) %> \p -> do
         need [profilePic]
         -- TODO do this in Haskell?
-        cmd_ @(String -> _ -> String -> _) "magick" profilePic "-crop 1024x1024+320+56 -resize 256x256" p
+        cmd_ @(String -> _ -> String -> _)
+            "magick"
+            profilePic
+            "-crop 1024x1024+320+56 -resize 256x256"
+            p
 
     (outDir </> "monpad.html") %> \_ -> do
         _ <- getSubmoduleState $ Submodule "monpad"
