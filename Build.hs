@@ -52,7 +52,6 @@ import Data.Foldable
 import Data.Function
 import Data.Functor
 import Data.Hashable
-import Data.List.Extra
 import Data.Map (Map)
 import Data.Map qualified as Map
 import Data.Maybe
@@ -138,19 +137,6 @@ main = shakeArgs shakeOpts do
     (outDir <//> "index.html") %> \p -> do
         let inFile = inDir </> htmlOutToIn (joinPath . drop 1 $ splitPath p)
         need [inFile]
-        -- TODO this is a bit of a hack
-        -- we can't make every page that uses the sidebar depend on all of its link targets
-        -- as that would cause dependency cycles
-        -- so instead we register the dependency only for the root
-        -- this means that we _can_ end up with pages that are reachable but outdated
-        -- but only in the rare event that we specifically request just a single non-root page from the command line
-        -- we'll likely revisit this at some point if we end up with mutually-linked markdown sources
-        -- which should be fine in principle, but will hit the same problem
-        -- the answer _might_ just be to stop being clever and always compile all HTML files
-        when (p `equalFilePath` (outDir </> "index.html")) . need $
-            sidebarLinks & mapMaybe \(p', _) ->
-                guard (notNull p') -- avoids trivial recursion
-                    $> (outDir </> p' </> "index.html")
         (contents, localLinks) <- liftIO $ runIOorExplode do
             doc <- readMarkdown pandocReaderOpts =<< liftIO (T.readFile inFile)
             firstM (writeHtml5 def) . runWriter $
@@ -175,7 +161,19 @@ main = shakeArgs shakeOpts do
                                             pure url
                             x -> pure x
         need localLinks
-        liftIO . TL.writeFile p . renderHtml =<< addCommonHtml =<< addDocHead "" contents
+        let noDep p' =
+                -- TODO this is a bit of a hack
+                -- we can't make every page that uses the sidebar depend on all of its link targets
+                -- as that would cause dependency cycles
+                -- so instead we register the dependency only for the root
+                -- this means that we _can_ end up with pages that are reachable but outdated
+                -- but only in the rare event that we specifically request just a single non-root page from the command line
+                -- we'll likely revisit this at some point if we end up with mutually-linked markdown sources
+                -- which should be fine in principle, but will hit the same problem
+                -- the answer _might_ just be to stop being clever and always compile all HTML files
+                not (p `equalFilePath` (outDir </> "index.html"))
+                    || null p' -- avoids trivial recursion
+        liftIO . TL.writeFile p . renderHtml =<< addCommonHtml noDep =<< addDocHead "" contents
 
 shakeOpts :: ShakeOptions
 shakeOpts =
@@ -277,24 +275,24 @@ addDocHead title body = do
   where
     stylesheets = [stylesheet, stylesheetClay]
 
-sidebarLinks :: [(FilePath, String)]
-sidebarLinks =
-    [ ("", "Home")
-    , ("blog", "Blog")
-    , ("portfolio", "Portfolio")
-    , ("work", "Hire me!")
-    ]
-
-addCommonHtml :: Html -> Action Html
-addCommonHtml body = do
+addCommonHtml :: (FilePath -> Bool) -> Html -> Action Html
+addCommonHtml noDep body = do
     need [outDir </> profilePic]
+    need $ links & mapMaybe \(p, _) -> guard (not $ noDep p) $> (outDir </> p </> "index.html")
     pure do
         (H.div ! HA.id "sidebar") do
             H.img ! HA.src (H.stringValue profilePic)
             sequence_ $
-                sidebarLinks <&> \(p, t) ->
+                links <&> \(p, t) ->
                     H.a (H.string t) ! HA.href (H.stringValue ("/" <> p)) ! HA.class_ "button-link"
         H.div body ! HA.id "content"
+  where
+    links =
+        [ ("", "Home")
+        , ("blog", "Blog")
+        , ("portfolio", "Portfolio")
+        , ("work", "Hire me!")
+        ]
 
 -- TODO upstream these, or use as the basis of a library, maybe with optics
 adjustHSL ::
