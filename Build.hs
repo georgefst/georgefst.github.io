@@ -149,7 +149,7 @@ main = shakeArgs shakeOpts do
         -- the answer _might_ just be to stop being clever and always compile all HTML files
         when (p `equalFilePath` (outDir </> "index.html")) . need $
             sidebarLinks & mapMaybe \(p', _) ->
-                guard (notNull p') -- avoids recursive dependency
+                guard (notNull p') -- avoids trivial recursion
                     $> (outDir </> p' </> "index.html")
         (contents, localLinks) <- liftIO $ runIOorExplode do
             doc <- readMarkdown pandocReaderOpts =<< liftIO (T.readFile inFile)
