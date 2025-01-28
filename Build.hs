@@ -112,12 +112,24 @@ main = shakeArgs shakeOpts do
 
     (outDir </> profilePic) %> \p -> do
         need [profilePic]
-        magick "-crop 1024x1024+320+56 -resize 512x512 -quality 90" profilePic p
+        magick
+            ( mconcat
+                [ ["-crop", "1024x1024+320+56"]
+                , ["-resize", "512x512"]
+                , ["-quality", "90"]
+                , ["(", "+clone", "-alpha", "extract", "-draw", "circle 256,256 0,256", "-negate", ")"]
+                , ["-alpha", "off"]
+                , ["-compose", "CopyOpacity"]
+                , ["-composite"]
+                ]
+            )
+            profilePic
+            p
 
     (outDir </> "favicon.ico") %> \p -> do
         let source = outDir </> profilePic
         need [source]
-        magick "-resize 16x16" source p
+        magick ["-resize", "16x16"] source p
 
     (outDir </> "monpad.html") %> \_ -> do
         _ <- getSubmoduleState $ Submodule "monpad"
@@ -302,8 +314,8 @@ addCommonHtml noDep body = do
         ]
 
 -- TODO do this in Haskell?
-magick :: String -> FilePath -> FilePath -> Action ()
-magick = flip $ cmd_ ("magick" :: String)
+magick :: [String] -> FilePath -> FilePath -> Action ()
+magick c i o = command_ [] "magick" ([i] <> c <> [o])
 
 -- TODO upstream these, or use as the basis of a library, maybe with optics
 adjustHSL ::
