@@ -278,5 +278,5 @@ type instance RuleResult Submodule = (String, String)
 addSubmoduleOracle :: Rules (Submodule -> Action (String, String))
 addSubmoduleOracle = addOracle $ \(Submodule p) ->
     (,)
-        <$> (fromStdout <$> cmd (Cwd p) ("git rev-parse HEAD" :: String))
-        <*> (fromStdout <$> cmd (Cwd p) ("git diff" :: String))
+        <$> (fromStdout <$> command [Cwd p] "git" ["rev-parse", "HEAD"])
+        <*> (fromStdout <$> command [Cwd p] "git" ["diff"])
