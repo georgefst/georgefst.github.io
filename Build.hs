@@ -110,7 +110,10 @@ main = shakeArgs shakeOpts do
             "--blue-medium" Clay.-: T.pack (sRGB24show blueMedium)
             "--blue-light" Clay.-: T.pack (sRGB24show blueLight)
 
-    (outDir </> profilePic) %> copyFileChanged profilePic
+    (outDir </> profilePic) %> \p -> do
+        need [profilePic]
+        -- TODO do this in Haskell?
+        cmd_ @(String -> _ -> String -> _) "magick" profilePic "-crop 1024x1024+320+56" p
 
     (outDir </> "monpad.html") %> \_ -> do
         _ <- getSubmoduleState $ Submodule "monpad"
