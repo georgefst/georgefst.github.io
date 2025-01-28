@@ -153,8 +153,8 @@ main = shakeArgs shakeOpts do
         let layout = fromMaybe (error $ "unknown Monpad layout: " <> p) $ Map.lookup (takeBaseName p) monpadLayouts
          in copyFileChanged ("./monpad/dhall/" <> layout.path <.> "dhall") p
 
-    (outDir <//> "index.html") %> \p -> do
-        let inFile = inDir </> htmlOutToIn (joinPath . drop 1 $ splitPath p)
+    (outDir <//> "index.html") *%> \p (head -> pc) -> do
+        let inFile = inDir </> htmlOutToIn (pc </> "index.html")
         need [inFile]
         (contents, localLinks) <- liftIO $ runIOorExplode do
             doc <- readMarkdown pandocReaderOpts =<< liftIO (T.readFile inFile)
@@ -316,6 +316,15 @@ addCommonHtml noDep body = do
 -- TODO do this in Haskell?
 magick :: [String] -> FilePath -> FilePath -> Action ()
 magick c i o = command_ [] "magick" ([i] <> c <> [o])
+
+-- TODO upstream to Shake
+-- this is essentially what was requested by OP in https://github.com/ndmitchell/shake/issues/499
+(*%>) :: FilePattern -> (FilePath -> [String] -> Action ()) -> Rules ()
+p *%> f =
+    p %> \x ->
+        f x
+            . fromMaybe (error "internal: failed to re-match pattern")
+            $ filePattern p x
 
 -- TODO upstream these, or use as the basis of a library, maybe with optics
 adjustHSL ::
