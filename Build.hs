@@ -108,13 +108,13 @@ main = shakeArgs shakeOpts do
             "--blue-medium" Clay.-: T.pack (sRGB24show blueMedium)
             "--blue-light" Clay.-: T.pack (sRGB24show blueLight)
 
-    getMonpadVersion <- addOracle $ \(MonpadVersion ()) ->
+    getSubmoduleState <- addOracle $ \(Submodule p) ->
         (,)
-            <$> (fromStdout <$> cmd (Cwd "monpad") ("git rev-parse HEAD" :: String))
-            <*> (fromStdout <$> cmd (Cwd "monpad") ("git diff" :: String))
+            <$> (fromStdout <$> cmd (Cwd p) ("git rev-parse HEAD" :: String))
+            <*> (fromStdout <$> cmd (Cwd p) ("git diff" :: String))
 
     (outDir </> "monpad.html") %> \_ -> do
-        _ <- getMonpadVersion $ MonpadVersion ()
+        _ <- getSubmoduleState $ Submodule "monpad"
         command_
             [Cwd "monpad"]
             "./build.sh"
@@ -173,8 +173,8 @@ shakeOpts =
         , shakeLint = Just LintBasic
         }
 
-newtype MonpadVersion = MonpadVersion () deriving newtype (Eq, Ord, Show, Typeable, NFData, Hashable, Binary)
-type instance RuleResult MonpadVersion = (String, String)
+newtype Submodule = Submodule FilePath deriving newtype (Eq, Ord, Show, Typeable, NFData, Hashable, Binary)
+type instance RuleResult Submodule = (String, String)
 
 pandocReaderOpts :: ReaderOptions
 pandocReaderOpts =
