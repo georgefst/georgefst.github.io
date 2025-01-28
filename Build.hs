@@ -132,7 +132,7 @@ main = shakeArgs shakeOpts do
 
     (monpadLayoutDir </> "*" <.> "dhall") %> \p ->
         let layout = fromMaybe (error $ "unknown Monpad layout: " <> p) $ Map.lookup (takeBaseName p) monpadLayouts
-         in copyFileChanged ("./monpad/dhall/" <> layout.path <> ".dhall") p
+         in copyFileChanged ("./monpad/dhall/" <> layout.path <.> "dhall") p
 
     (outDir <//> "index.html") %> \p -> do
         let inFile = inDir </> htmlOutToIn (joinPath . drop 1 $ splitPath p)
