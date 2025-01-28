@@ -3,14 +3,17 @@
 {- cabal:
 build-depends:
     base,
+    binary,
     blaze-html,
     blaze-markup,
     clay,
     colour,
     containers,
+    deepseq,
     directory,
     extra,
     filepath,
+    hashable,
     mtl,
     neat-interpolation,
     pandoc-types,
@@ -22,10 +25,12 @@ build-depends:
 -}
 {-# LANGUAGE GHC2021 #-}
 {-# LANGUAGE BlockArguments #-}
+{-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedRecordDot #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE QuasiQuotes #-}
+{-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE ViewPatterns #-}
 {-# LANGUAGE NoFieldSelectors #-}
 {-# OPTIONS_GHC -Wall #-}
@@ -34,8 +39,10 @@ module Main (main) where
 
 import Clay qualified
 import Clay.Pseudo qualified
+import Control.DeepSeq
 import Control.Monad.Except
 import Control.Monad.Writer
+import Data.Binary
 import Data.Colour
 import Data.Colour.RGBSpace
 import Data.Colour.RGBSpace.HSL
@@ -43,6 +50,7 @@ import Data.Colour.SRGB
 import Data.Foldable
 import Data.Function
 import Data.Functor
+import Data.Hashable
 import Data.Map (Map)
 import Data.Map qualified as Map
 import Data.Maybe
@@ -52,6 +60,7 @@ import Data.Text qualified as T
 import Data.Text.IO qualified as T
 import Data.Text.Lazy.IO qualified as TL
 import Data.Tuple.Extra
+import Data.Typeable
 import Development.Shake
 import NeatInterpolation
 import System.Directory
@@ -99,9 +108,13 @@ main = shakeArgs shakeOpts do
             "--blue-medium" Clay.-: T.pack (sRGB24show blueMedium)
             "--blue-light" Clay.-: T.pack (sRGB24show blueLight)
 
+    getMonpadVersion <- addOracle $ \(MonpadVersion ()) ->
+        (,)
+            <$> (fromStdout <$> cmd (Cwd "monpad") ("git rev-parse HEAD" :: String))
+            <*> (fromStdout <$> cmd (Cwd "monpad") ("git diff" :: String))
+
     (outDir </> "monpad.html") %> \_ -> do
-        -- TODO this needs to be re-run when the submodule hash changes
-        -- for now we must manually run `./Build.hs dist/monpad.html -B`
+        _ <- getMonpadVersion $ MonpadVersion ()
         command_
             [Cwd "monpad"]
             "./build.sh"
@@ -159,6 +172,9 @@ shakeOpts =
         , shakeThreads = 4
         , shakeLint = Just LintBasic
         }
+
+newtype MonpadVersion = MonpadVersion () deriving newtype (Eq, Ord, Show, Typeable, NFData, Hashable, Binary)
+type instance RuleResult MonpadVersion = (String, String)
 
 pandocReaderOpts :: ReaderOptions
 pandocReaderOpts =
