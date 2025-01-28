@@ -119,6 +119,16 @@ main = shakeArgs shakeOpts do
             "-crop 1024x1024+320+56 -resize 512x512 -quality 90"
             p
 
+    (outDir </> "favicon.ico") %> \p -> do
+        let source = outDir </> profilePic
+        need [source]
+        -- TODO do this in Haskell?
+        cmd_ @(String -> _ -> String -> _)
+            "magick"
+            source
+            "-resize 16x16"
+            p
+
     (outDir </> "monpad.html") %> \_ -> do
         _ <- getSubmoduleState $ Submodule "monpad"
         command_
