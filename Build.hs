@@ -211,7 +211,7 @@ monpadLayoutDir :: FilePath
 monpadLayoutDir = outDir </> "portfolio/monpad/layouts"
 
 blueDark, blueMedium, blueLight :: Colour Double
-blueDark = sRGB24read "#152542"
+blueDark = sRGB24read "#162745"
 (blueMedium, blueLight) =
     both
         (flip lighten blueDark)
