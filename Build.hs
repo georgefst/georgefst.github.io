@@ -127,7 +127,7 @@ main = shakeArgs shakeOpts do
             profilePic
             p
 
-    (outDir </> "favicon.ico") %> \p -> do
+    (outDir </> favicon) %> \p -> do
         let source = outDir </> profilePic
         need [source]
         magick ["-resize", "16x16"] source p
@@ -156,7 +156,7 @@ main = shakeArgs shakeOpts do
 
     (outDir <//> "index.html") *%> \p (pc :! EmptyList) -> do
         let inFile = inDir </> htmlOutToIn (pc </> "index.html")
-        need [inFile]
+        need [inFile, outDir </> favicon]
         (contents, localLinks) <- liftIO $ runIOorExplode do
             doc <- readMarkdown pandocReaderOpts =<< liftIO (T.readFile inFile)
             firstM (writeHtml5 def) . runWriter $
@@ -253,6 +253,8 @@ stylesheetClay :: FilePath
 stylesheetClay = "generated.css"
 profilePic :: FilePath
 profilePic = "me.avif"
+favicon :: FilePath
+favicon = "favicon.ico"
 monpadLayoutDir :: FilePath
 monpadLayoutDir = outDir </> "portfolio/monpad/layouts"
 
