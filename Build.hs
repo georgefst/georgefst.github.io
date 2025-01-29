@@ -193,7 +193,7 @@ main = shakeArgs shakeOpts do
                 -- the answer _might_ just be to stop being clever and always compile all HTML files
                 not (p `equalFilePath` (outDir </> "index.html"))
                     || null p' -- avoids trivial recursion
-        liftIO . TL.writeFile p . renderHtml =<< addCommonHtml noDep =<< addDocHead "" contents
+        liftIO . TL.writeFile p . renderHtml =<< addDocHead "" =<< addCommonHtml noDep contents
 
 shakeOpts :: ShakeOptions
 shakeOpts =
