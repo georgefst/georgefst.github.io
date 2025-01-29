@@ -29,6 +29,7 @@ build-depends:
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedRecordDot #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE PatternSynonyms #-}
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE ViewPatterns #-}
@@ -153,7 +154,7 @@ main = shakeArgs shakeOpts do
         let layout = fromMaybe (error $ "unknown Monpad layout: " <> p) $ Map.lookup (takeBaseName p) monpadLayouts
          in copyFileChanged ("./monpad/dhall/" <> layout.path <.> "dhall") p
 
-    (outDir <//> "index.html") *%> \p (head -> pc) -> do
+    (outDir <//> "index.html") *%> \p (pc :! EmptyList) -> do
         let inFile = inDir </> htmlOutToIn (pc </> "index.html")
         need [inFile]
         (contents, localLinks) <- liftIO $ runIOorExplode do
@@ -316,6 +317,16 @@ addCommonHtml noDep body = do
 -- TODO do this in Haskell?
 magick :: [String] -> FilePath -> FilePath -> Action ()
 magick c i o = command_ [] "magick" ([i] <> c <> [o])
+
+-- allows for ad-hoc partial list patterns without triggering a warning
+-- TODO replace this whenever GHC allows per-line disabling of warnings
+{-# COMPLETE (:!) #-}
+infixr 5 :!
+pattern (:!) :: a -> [a] -> [a]
+pattern (:!) x y = x : y
+{-# COMPLETE EmptyList #-}
+pattern EmptyList :: [a]
+pattern EmptyList = []
 
 -- TODO upstream to Shake
 -- this is essentially what was requested by OP in https://github.com/ndmitchell/shake/issues/499
