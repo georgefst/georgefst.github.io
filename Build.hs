@@ -191,7 +191,7 @@ main = shakeArgs shakeOpts do
                 -- we'll likely revisit this at some point if we end up with mutually-linked markdown sources
                 -- which should be fine in principle, but will hit the same problem
                 -- the answer _might_ just be to stop being clever and always compile all HTML files
-                not (p `equalFilePath` (outDir </> "index.html"))
+                not (null pc)
                     || null p' -- avoids trivial recursion
         liftIO . TL.writeFile p . renderHtml =<< addDocHead "" =<< addCommonHtml noDep contents
 
