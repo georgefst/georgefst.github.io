@@ -33,10 +33,9 @@ a.button-link {
   min-width: 5rem;
   padding: 0.5rem 1rem;
   background-color: var(--blue-light);
-}
-button:hover,
-a.button-link:hover {
-  background-color: var(--blue-dark);
+  &:hover {
+    background-color: var(--blue-dark);
+  }
 }
 
 body {
@@ -82,26 +81,26 @@ body {
       width: 4rem;
     }
   }
-}
-#sidebar:not(:has(+ #content)) {
-  width: 100vw;
-  height: 100vh;
-  justify-content: space-evenly;
-  > .home-image {
-    width: unset;
-  }
-  @media (orientation: landscape) {
-    flex-direction: row;
+  &:not(:has(+ #content)) {
+    width: 100vw;
+    height: 100vh;
+    justify-content: space-evenly;
     > .home-image {
-      min-width: 0;
-      max-height: 100%;
+      width: unset;
     }
-  }
-  @media (orientation: portrait) {
-    flex-direction: column;
-    > .home-image {
-      min-height: 0;
-      max-width: 100%;
+    @media (orientation: landscape) {
+      flex-direction: row;
+      > .home-image {
+        min-width: 0;
+        max-height: 100%;
+      }
+    }
+    @media (orientation: portrait) {
+      flex-direction: column;
+      > .home-image {
+        min-height: 0;
+        max-width: 100%;
+      }
     }
   }
 }
