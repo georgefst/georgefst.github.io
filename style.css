@@ -81,7 +81,7 @@ body {
   box-sizing: border-box;
   padding: 1.5rem;
   gap: 1.5rem;
-  > .home-image {
+  > #home-image {
     width: 10rem;
     > img {
       width: 100%;
@@ -91,7 +91,7 @@ body {
   @media (orientation: portrait) {
     flex-direction: row;
     justify-content: space-evenly;
-    > .home-image {
+    > #home-image {
       width: 4rem;
     }
   }
@@ -99,19 +99,19 @@ body {
     width: 100vw;
     height: 100vh;
     justify-content: space-evenly;
-    > .home-image {
+    > #home-image {
       width: unset;
     }
     @media (orientation: landscape) {
       flex-direction: row;
-      > .home-image {
+      > #home-image {
         min-width: 0;
         max-height: 100%;
       }
     }
     @media (orientation: portrait) {
       flex-direction: column;
-      > .home-image {
+      > #home-image {
         min-height: 0;
         max-width: 100%;
       }

@@ -307,7 +307,7 @@ addCommonHtml noDep body = do
     need $ links & mapMaybe \(p, _) -> guard (not $ noDep p) $> (outDir </> p </> "index.html")
     pure do
         (H.div ! HA.id "sidebar") do
-            H.a (H.img ! HA.src (H.stringValue profilePic)) ! HA.href "/" ! HA.class_ "home-image"
+            H.a (H.img ! HA.src (H.stringValue profilePic)) ! HA.href "/" ! HA.id "home-image"
             sequence_ $
                 links <&> \(p, t) ->
                     H.a (H.string t) ! HA.href (H.stringValue ("/" <> p)) ! HA.class_ "button-link"
