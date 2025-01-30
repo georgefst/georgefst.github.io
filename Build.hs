@@ -118,7 +118,7 @@ main = shakeArgs shakeOpts do
                 [ ["-crop", "1024x1024+320+56"]
                 , ["-resize", "512x512"]
                 , ["-quality", "90"]
-                , ["(", "+clone", "-alpha", "extract", "-draw", "circle 256,256 0,256", "-negate", ")"]
+                , ["(", "+clone", "-alpha", "extract", "-draw", "circle 255,255 0,256", "-negate", ")"]
                 , ["-alpha", "off"]
                 , ["-compose", "CopyOpacity"]
                 , ["-composite"]
