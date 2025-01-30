@@ -46,6 +46,7 @@
   }
   @media (orientation: portrait) {
     flex-direction: row;
+    justify-content: space-between;
     > img {
       width: 4rem;
     }
