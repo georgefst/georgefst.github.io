@@ -1,9 +1,5 @@
 /* Remove default styling */
 
-* {
-  overscroll-behavior: none;
-}
-
 iframe {
   border-width: 0;
 }
