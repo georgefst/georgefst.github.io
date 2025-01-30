@@ -79,7 +79,7 @@ body {
   }
   @media (orientation: portrait) {
     flex-direction: row;
-    justify-content: space-between;
+    justify-content: space-evenly;
     > .home-image {
       width: 4rem;
     }
