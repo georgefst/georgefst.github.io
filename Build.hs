@@ -155,11 +155,15 @@ main = shakeArgs shakeOpts do
          in copyFileChanged ("./monpad/dhall/" <> layout.path <.> "dhall") p
 
     (outDir <//> "index.html") *%> \p (pc :! EmptyList) -> do
-        let inFile = inDir </> htmlOutToIn (pc </> "index.html")
-        need [inFile, outDir </> favicon]
-        (contents, localLinks) <- liftIO $ runIOorExplode do
+        need [outDir </> favicon]
+        (contents, localLinks) <- case pc of
+          "" -> pure (Nothing, [])
+          _ -> do
+           let inFile = inDir </> htmlOutToIn (pc </> "index.html")
+           need [inFile]
+           liftIO $ runIOorExplode do
             doc <- readMarkdown pandocReaderOpts =<< liftIO (T.readFile inFile)
-            firstM (writeHtml5 def) . runWriter $
+            firstM (fmap Just . writeHtml5 def) . runWriter $
                 doc & walkM \case
                     RawBlock format t -> do
                         tell $
@@ -297,7 +301,7 @@ addDocHead title body = do
   where
     stylesheets = [stylesheet, stylesheetClay]
 
-addCommonHtml :: (FilePath -> Bool) -> Html -> Action Html
+addCommonHtml :: (FilePath -> Bool) -> Maybe Html -> Action Html
 addCommonHtml noDep body = do
     need [outDir </> profilePic]
     need $ links & mapMaybe \(p, _) -> guard (not $ noDep p) $> (outDir </> p </> "index.html")
@@ -307,7 +311,7 @@ addCommonHtml noDep body = do
             sequence_ $
                 links <&> \(p, t) ->
                     H.a (H.string t) ! HA.href (H.stringValue ("/" <> p)) ! HA.class_ "button-link"
-        H.div body ! HA.id "content"
+        body & foldMap \b -> H.div b ! HA.id "content"
   where
     links =
         [ ("", "Home")

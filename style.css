@@ -34,16 +34,43 @@
 }
 
 #sidebar {
-  height: 100vh;
   background-color: var(--blue-medium);
   display: flex;
   flex-direction: column;
   align-items: center;
+  box-sizing: border-box;
+  padding: 1.5rem;
   gap: 1.5rem;
   > img {
-    padding: 2rem;
-    padding-bottom: 1rem;
     width: 10rem;
+  }
+  @media (orientation: portrait) {
+    flex-direction: row;
+    > img {
+      width: 4rem;
+    }
+  }
+}
+#sidebar:not(:has(+ #content)) {
+  width: 100vw;
+  height: 100vh;
+  justify-content: space-evenly;
+  > img {
+    width: unset;
+  }
+  @media (orientation: landscape) {
+    flex-direction: row;
+    > img {
+      min-width: 0;
+      max-height: 100%;
+    }
+  }
+  @media (orientation: portrait) {
+    flex-direction: column;
+    > img {
+      min-height: 0;
+      max-width: 100%;
+    }
   }
 }
 
@@ -61,6 +88,9 @@ body {
   color: white;
   display: flex;
   overflow: hidden;
+  @media (orientation: portrait) {
+    flex-direction: column;
+  }
 }
 
 iframe {
