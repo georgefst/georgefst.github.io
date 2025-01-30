@@ -157,33 +157,33 @@ main = shakeArgs shakeOpts do
     (outDir <//> "index.html") *%> \p (pc :! EmptyList) -> do
         need [outDir </> favicon]
         (contents, localLinks) <- case pc of
-          "" -> pure (Nothing, [])
-          _ -> do
-           let inFile = inDir </> htmlOutToIn (pc </> "index.html")
-           need [inFile]
-           liftIO $ runIOorExplode do
-            doc <- readMarkdown pandocReaderOpts =<< liftIO (T.readFile inFile)
-            firstM (fmap Just . writeHtml5 def) . runWriter $
-                doc & walkM \case
-                    RawBlock format t -> do
-                        tell $
-                            parseTags t & mapMaybe \case
-                                TagOpen _ as ->
-                                    find ((== "src") . fst) as <&> \(_, src) ->
-                                        outDir </> T.unpack (T.dropWhile (== '/') $ T.takeWhile (/= '?') src)
-                                _ -> Nothing
-                        pure $ RawBlock format t
-                    block ->
-                        block & walkM \case
-                            Link attrs inlines (url@(T.unpack -> url'), target) ->
-                                Link attrs inlines . (,target)
-                                    <$> if takeExtension (T.unpack url) == ".md"
-                                        then do
-                                            tell [outDir </> htmlInToOut url']
-                                            pure $ T.pack $ htmlInToOut' url'
-                                        else
-                                            pure url
-                            x -> pure x
+            "" -> pure (Nothing, [])
+            _ -> do
+                let inFile = inDir </> htmlOutToIn (pc </> "index.html")
+                need [inFile]
+                liftIO $ runIOorExplode do
+                    doc <- readMarkdown pandocReaderOpts =<< liftIO (T.readFile inFile)
+                    firstM (fmap Just . writeHtml5 def) . runWriter $
+                        doc & walkM \case
+                            RawBlock format t -> do
+                                tell $
+                                    parseTags t & mapMaybe \case
+                                        TagOpen _ as ->
+                                            find ((== "src") . fst) as <&> \(_, src) ->
+                                                outDir </> T.unpack (T.dropWhile (== '/') $ T.takeWhile (/= '?') src)
+                                        _ -> Nothing
+                                pure $ RawBlock format t
+                            block ->
+                                block & walkM \case
+                                    Link attrs inlines (url@(T.unpack -> url'), target) ->
+                                        Link attrs inlines . (,target)
+                                            <$> if takeExtension (T.unpack url) == ".md"
+                                                then do
+                                                    tell [outDir </> htmlInToOut url']
+                                                    pure $ T.pack $ htmlInToOut' url'
+                                                else
+                                                    pure url
+                                    x -> pure x
         need localLinks
         let noDep p' =
                 -- TODO this is a bit of a hack
