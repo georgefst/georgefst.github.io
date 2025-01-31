@@ -158,6 +158,23 @@ main = shakeArgs shakeOpts do
         need [outDir </> favicon]
         (contents, localLinks) <- case pc of
             "" -> pure (Nothing, [])
+            "posts/" -> do
+                posts <- getDirectoryFiles inDir ["posts" </> "*" <.> "md"]
+                need $ posts <&> \w -> outDir </> htmlInToOut w
+                -- TODO get name from initial h1?
+                -- how? output it from Pandoc step somehow with custom Shake rule?
+                let name = \case
+                        "posts/dummy-post-1.md" -> "Post 1"
+                        "posts/dummy-post-2.md" -> "Post 2"
+                        "posts/dummy-post-3.md" -> "Post 3"
+                        _ -> ""
+                pure
+                    ( Just do
+                        H.h1 "Blog"
+                        for_ posts \post ->
+                            H.li $ H.a (name post) ! HA.href (H.stringValue $ htmlInToOut' post)
+                    , []
+                    )
             _ -> do
                 let inFile = inDir </> htmlOutToIn (pc </> "index.html")
                 need [inFile]
@@ -314,7 +331,7 @@ addCommonHtml noDep body = do
         body & foldMap \b -> H.div b ! HA.id "content"
   where
     links =
-        [ ("blog", "Blog")
+        [ ("posts", "Blog")
         , ("portfolio", "Portfolio")
         , ("work", "Hire me!")
         ]
