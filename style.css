@@ -30,7 +30,7 @@ h2 {
 
 a {
   &:hover:not(.button-link) {
-    opacity: .6;
+    opacity: 0.6;
   }
 }
 
