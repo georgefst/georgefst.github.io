@@ -6,9 +6,9 @@ iframe {
 
 button {
   border-width: 0;
-	font: inherit;
-	color: inherit;
-	cursor: pointer;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
 }
 
 pre {
