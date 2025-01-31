@@ -69,6 +69,7 @@ body {
 /* Main interesting stuff */
 
 #content {
+  flex-grow: 1;
   padding: 1rem 3rem;
   box-sizing: border-box;
   height: 100vh;
