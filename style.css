@@ -1,8 +1,129 @@
-:root {
-  --blue-dark: #112c4a;
-  --blue-medium: #2a6fbd;
-  --blue-light: #8db6e5;
+/* Remove default styling */
+
+iframe {
+  border-width: 0;
 }
+
+button {
+  border-width: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+pre {
+  font: inherit;
+  margin: 0;
+}
+
+a {
+  text-decoration: unset;
+  color: inherit;
+}
+
+/* Universal styles for element types */
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  color: var(--blue-light);
+}
+
+a {
+  &:hover:not(.button-link) {
+    opacity: 0.6;
+  }
+}
+
+button,
+a.button-link {
+  border-radius: 0.1rem;
+  text-align: center;
+  align-content: center;
+  min-height: 3rem;
+  min-width: 7rem;
+  padding: 0.5rem 1rem;
+  box-sizing: border-box;
+  background-color: var(--blue-light);
+  &:hover {
+    background-color: var(--blue-dark);
+  }
+}
+
+body {
+  margin: 0;
+  font-family: Helvetica, Arial, sans-serif;
+  background-color: var(--blue-dark);
+  color: white;
+  display: flex;
+  overflow: hidden;
+  @media (orientation: portrait) {
+    flex-direction: column;
+    overflow-y: scroll;
+  }
+}
+
+/* Main interesting stuff */
+
+#content {
+  padding: 1rem 3rem;
+  box-sizing: border-box;
+  height: 100vh;
+  @media (orientation: landscape) {
+    overflow-y: scroll;
+  }
+}
+
+#sidebar {
+  background-color: var(--blue-medium);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-sizing: border-box;
+  padding: 1.5rem;
+  gap: 1.5rem;
+  > #home-image {
+    width: 10rem;
+    > img {
+      width: 100%;
+      height: 100%;
+    }
+  }
+  @media (orientation: portrait) {
+    flex-direction: row;
+    justify-content: space-evenly;
+    > #home-image {
+      width: 4rem;
+    }
+  }
+  &:not(:has(+ #content)) {
+    width: 100vw;
+    height: 100vh;
+    justify-content: space-evenly;
+    > #home-image {
+      width: unset;
+    }
+    @media (orientation: landscape) {
+      flex-direction: row;
+      > #home-image {
+        min-width: 0;
+        max-height: 100%;
+      }
+    }
+    @media (orientation: portrait) {
+      flex-direction: column;
+      > #home-image {
+        min-height: 0;
+        max-width: 100%;
+      }
+    }
+  }
+}
+
+/* Page-specific */
 
 #monpad-grid {
   background-color: var(--blue-medium);
@@ -22,14 +143,6 @@
     gap: 1.5rem;
     padding: 1.5rem;
     overflow: scroll;
-    > * {
-      text-align: center;
-      height: 3rem;
-      background-color: var(--blue-light);
-    }
-    > *:hover {
-      background-color: var(--blue-dark);
-    }
   }
   .wrapper:has(> #monpad-layout) {
     background-color: var(--blue-light);
@@ -45,28 +158,4 @@
       margin: 1rem;
     }
   }
-}
-
-body {
-  margin: 3rem;
-  margin-top: 2.5rem;
-  font-family: Helvetica, Arial, sans-serif;
-  background-color: var(--blue-dark);
-  color: white;
-}
-
-iframe {
-  border-width: 0;
-}
-button {
-  all: unset;
-}
-pre {
-  font: inherit;
-  margin: 0;
-}
-
-h1,
-h2 {
-  color: var(--blue-light);
 }
