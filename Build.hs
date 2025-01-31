@@ -156,8 +156,8 @@ main = shakeArgs shakeOpts do
 
     (outDir <//> "index.html") *%> \p (pc :! EmptyList) -> do
         need [outDir </> favicon]
-        (contents, localLinks) <- case pc of
-            "" -> pure (Nothing, [])
+        contents <- case pc of
+            "" -> pure Nothing
             "posts/" -> do
                 posts <- getDirectoryFiles inDir ["posts" </> "*" <.> "md"]
                 need $ posts <&> \w -> outDir </> htmlInToOut w
@@ -168,19 +168,17 @@ main = shakeArgs shakeOpts do
                         "posts/dummy-post-2.md" -> "Post 2"
                         "posts/dummy-post-3.md" -> "Post 3"
                         _ -> ""
-                pure
-                    ( Just do
+                pure $
+                    Just do
                         H.h1 "Blog"
                         for_ posts \post ->
                             H.li $ H.a (name post) ! HA.href (H.stringValue $ htmlInToOut' post)
-                    , []
-                    )
             _ -> do
                 let inFile = inDir </> htmlOutToIn (pc </> "index.html")
                 need [inFile]
-                liftIO $ runIOorExplode do
+                (content, localLinks) <- liftIO $ runIOorExplode do
                     doc <- readMarkdown pandocReaderOpts =<< liftIO (T.readFile inFile)
-                    firstM (fmap Just . writeHtml5 def) . runWriter $
+                    firstM (writeHtml5 def) . runWriter $
                         doc & walkM \case
                             RawBlock format t -> do
                                 tell $
@@ -201,7 +199,8 @@ main = shakeArgs shakeOpts do
                                                 else
                                                     pure url
                                     x -> pure x
-        need localLinks
+                need localLinks
+                pure $ Just content
         let noDep p' =
                 -- TODO this is a bit of a hack
                 -- we can't make every page that uses the sidebar depend on all of its link targets
