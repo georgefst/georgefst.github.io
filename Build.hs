@@ -156,6 +156,30 @@ main = shakeArgs shakeOpts do
         let layout = fromMaybe (error $ "unknown Monpad layout: " <> p) $ Map.lookup (takeBaseName p) monpadLayouts
          in copyFileChanged ("./monpad/dhall/" <> layout.path <.> "dhall") p
 
+    pandocStuff <- newCache \inFile -> liftIO $ runIOorExplode do
+        doc <- readMarkdown pandocReaderOpts =<< liftIO (T.readFile inFile)
+        firstM (writeHtml5 def) . runWriter $
+            doc & walkM \case
+                RawBlock format t -> do
+                    tell $
+                        parseTags t & mapMaybe \case
+                            TagOpen _ as ->
+                                find ((== "src") . fst) as <&> \(_, src) ->
+                                    outDir </> T.unpack (T.dropWhile (== '/') $ T.takeWhile (/= '?') src)
+                            _ -> Nothing
+                    pure $ RawBlock format t
+                block ->
+                    block & walkM \case
+                        Link attrs inlines (url@(T.unpack -> url'), target) ->
+                            Link attrs inlines . (,target)
+                                <$> if takeExtension (T.unpack url) == ".md"
+                                    then do
+                                        tell [outDir </> htmlInToOut url']
+                                        pure $ T.pack $ htmlInToOut' url'
+                                    else
+                                        pure url
+                        x -> pure x
+
     (outDir <//> "index.html") *%> \p (pc :! EmptyList) -> do
         need [outDir </> favicon]
         (title, contents) <- case pc of
@@ -177,29 +201,7 @@ main = shakeArgs shakeOpts do
             _ -> do
                 let inFile = inDir </> htmlOutToIn (pc </> "index.html")
                 need [inFile]
-                (content, localLinks) <- liftIO $ runIOorExplode do
-                    doc <- readMarkdown pandocReaderOpts =<< liftIO (T.readFile inFile)
-                    firstM (writeHtml5 def) . runWriter $
-                        doc & walkM \case
-                            RawBlock format t -> do
-                                tell $
-                                    parseTags t & mapMaybe \case
-                                        TagOpen _ as ->
-                                            find ((== "src") . fst) as <&> \(_, src) ->
-                                                outDir </> T.unpack (T.dropWhile (== '/') $ T.takeWhile (/= '?') src)
-                                        _ -> Nothing
-                                pure $ RawBlock format t
-                            block ->
-                                block & walkM \case
-                                    Link attrs inlines (url@(T.unpack -> url'), target) ->
-                                        Link attrs inlines . (,target)
-                                            <$> if takeExtension (T.unpack url) == ".md"
-                                                then do
-                                                    tell [outDir </> htmlInToOut url']
-                                                    pure $ T.pack $ htmlInToOut' url'
-                                                else
-                                                    pure url
-                                    x -> pure x
+                (content, localLinks) <- pandocStuff inFile
                 need localLinks
                 pure (T.pack $ mapHead toUpper $ takeBaseName inFile, Just content)
         let noDep p' =
