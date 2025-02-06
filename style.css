@@ -81,6 +81,7 @@ body {
   > * {
     flex-grow: 1;
     max-width: 40rem;
+    text-align: justify;
     height: fit-content;
   }
 }
