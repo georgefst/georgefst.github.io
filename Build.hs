@@ -158,8 +158,7 @@ main = shakeArgs shakeOpts do
 
     pandocStuff <- newCache \inFile -> liftIO $ runIOorExplode do
         doc <- readMarkdown pandocReaderOpts =<< liftIO (T.readFile inFile)
-        firstM (writeHtml5 def) . runWriter $
-            doc & walkM \case
+        let (content, localLinks) = runWriter $ doc & walkM \case
                 RawBlock format t -> do
                     tell $
                         parseTags t & mapMaybe \case
@@ -179,6 +178,8 @@ main = shakeArgs shakeOpts do
                                     else
                                         pure url
                         x -> pure x
+        contentHtml <- writeHtml5 def content
+        pure (contentHtml, localLinks)
 
     (outDir <//> "index.html") *%> \p (pc :! EmptyList) -> do
         need [outDir </> favicon]
