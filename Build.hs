@@ -172,7 +172,7 @@ main = shakeArgs shakeOpts do
                         _ -> ""
                 pure . ("Blog",) $ Just do
                     H.h1 "Blog"
-                    for_ posts \post ->
+                    (H.ul ! HA.id "blog-links") $ for_ posts \post ->
                         H.li $ H.a (name post) ! HA.href (H.stringValue $ "/" </> htmlInToOut' post)
             _ -> do
                 let inFile = inDir </> htmlOutToIn (pc </> "index.html")

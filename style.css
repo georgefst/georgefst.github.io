@@ -126,6 +126,19 @@ body {
 
 /* Page-specific */
 
+#content.posts {
+  > h1 {
+    margin-bottom: 0;
+  }
+  > #blog-links {
+    > li {
+      text-align: left;
+      font-size: large;
+      padding: 0.5rem;
+    }
+  }
+}
+
 #content.portfolio {
   #monpad-grid {
     background-color: var(--blue-medium);
