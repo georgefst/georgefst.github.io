@@ -45,6 +45,7 @@ import Control.Monad
 import Control.Monad.Except
 import Control.Monad.Writer
 import Data.Binary
+import Data.Char
 import Data.Colour
 import Data.Colour.RGBSpace
 import Data.Colour.RGBSpace.HSL
@@ -157,8 +158,8 @@ main = shakeArgs shakeOpts do
 
     (outDir <//> "index.html") *%> \p (pc :! EmptyList) -> do
         need [outDir </> favicon]
-        contents <- case pc of
-            "" -> pure Nothing
+        (title, contents) <- case pc of
+            "" -> pure ("", Nothing)
             "posts/" -> do
                 posts <- getDirectoryFiles inDir ["posts" </> "*" <.> "md"]
                 need $ posts <&> \w -> outDir </> htmlInToOut w
@@ -169,7 +170,7 @@ main = shakeArgs shakeOpts do
                         "posts/dummy-post-2.md" -> "Post 2"
                         "posts/dummy-post-3.md" -> "Post 3"
                         _ -> ""
-                pure $ Just do
+                pure . ("Blog",) $ Just do
                     H.h1 "Blog"
                     for_ posts \post ->
                         H.li $ H.a (name post) ! HA.href (H.stringValue $ "/" </> htmlInToOut' post)
@@ -200,7 +201,7 @@ main = shakeArgs shakeOpts do
                                                     pure url
                                     x -> pure x
                 need localLinks
-                pure $ Just content
+                pure (T.pack $ mapHead toUpper $ takeBaseName inFile, Just content)
         let noDep p' =
                 -- TODO this is a bit of a hack
                 -- we can't make every page that uses the sidebar depend on all of its link targets
@@ -213,7 +214,7 @@ main = shakeArgs shakeOpts do
                 -- the answer _might_ just be to stop being clever and always compile all HTML files
                 not (null pc)
                     || null p' -- avoids trivial recursion
-        liftIO . TL.writeFile p . renderHtml =<< addDocHead "" =<< addCommonHtml noDep contents
+        liftIO . TL.writeFile p . renderHtml =<< addDocHead title =<< addCommonHtml noDep contents
 
 shakeOpts :: ShakeOptions
 shakeOpts =
@@ -388,3 +389,8 @@ addSubmoduleOracle = addOracle $ \(Submodule p) ->
         (,)
             <$> (fromStdout <$> command [Cwd p] "git" ["rev-parse", "HEAD"])
             <*> (fromStdout <$> command [Cwd p] "git" ["diff"])
+
+mapHead :: (a -> a) -> [a] -> [a]
+mapHead f = \case
+    [] -> []
+    x : xs -> f x : xs
