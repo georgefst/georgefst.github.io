@@ -336,7 +336,7 @@ addCommonHtml noDep body = do
         , ("work", "Hire me!")
         ]
 
--- TODO do this in Haskell?
+-- TODO do this in Haskell, e.g. with `JuicyPixels-extra`?
 magick :: [String] -> FilePath -> FilePath -> Action ()
 magick c i o = command_ [] "magick" ([i] <> c <> [o])
 
