@@ -319,6 +319,7 @@ addDocHead title body = do
     need $ map (outDir </>) stylesheets
     pure $ H.docTypeHtml do
         H.head do
+            H.meta ! HA.charset "UTF-8"
             H.title . H.text $ "George Thomas" <> mwhen (not $ T.null title) " - " <> title
             for_ stylesheets \s -> H.link ! HA.rel "stylesheet" ! HA.href (H.stringValue $ "/" </> s)
         H.body body
