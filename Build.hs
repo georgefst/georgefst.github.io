@@ -45,7 +45,6 @@ import Control.Monad
 import Control.Monad.Except
 import Control.Monad.Writer
 import Data.Binary
-import Data.Char
 import Data.Colour
 import Data.Colour.RGBSpace
 import Data.Colour.RGBSpace.HSL
@@ -62,6 +61,7 @@ import Data.Text (Text)
 import Data.Text qualified as T
 import Data.Text.IO qualified as T
 import Data.Text.Lazy.IO qualified as TL
+import Data.Traversable
 import Data.Tuple.Extra
 import Data.Typeable
 import Development.Shake
@@ -158,6 +158,14 @@ main = shakeArgs shakeOpts do
 
     pandocStuff <- newCache \inFile -> liftIO $ runIOorExplode do
         doc <- readMarkdown pandocReaderOpts =<< liftIO (T.readFile inFile)
+        let title = case doc of
+                Pandoc _ (Header 1 _ h : _) ->
+                    mconcat $
+                        h & mapMaybe \case
+                            Str s -> Just s
+                            Space -> Just " "
+                            _ -> Nothing
+                _ -> error $ "no top-level header in input: " <> inFile
         let (content, localLinks) =
                 runWriter $
                     doc & walkM \case
@@ -181,7 +189,7 @@ main = shakeArgs shakeOpts do
                                                 pure url
                                 x -> pure x
         contentHtml <- writeHtml5 def content
-        pure (contentHtml, localLinks)
+        pure (title, contentHtml, localLinks)
 
     (outDir <//> "index.html") *%> \p (pc :! EmptyList) -> do
         need [outDir </> favicon]
@@ -190,23 +198,17 @@ main = shakeArgs shakeOpts do
             "posts/" -> do
                 posts <- getDirectoryFiles inDir ["posts" </> "*" <.> "md"]
                 need $ posts <&> \w -> outDir </> htmlInToOut w
-                -- TODO get name from initial h1?
-                -- how? output it from Pandoc step somehow with custom Shake rule?
-                let name = \case
-                        "posts/dummy-post-1.md" -> "Post 1"
-                        "posts/dummy-post-2.md" -> "Post 2"
-                        "posts/dummy-post-3.md" -> "Post 3"
-                        _ -> ""
+                posts' <- for posts \post -> (post,) <$> pandocStuff (inDir </> post)
                 pure . ("Blog",) $ Just do
                     H.h1 "Blog"
-                    (H.ul ! HA.id "blog-links") $ for_ posts \post ->
-                        H.li $ H.a (name post) ! HA.href (H.stringValue $ "/" </> htmlInToOut' post)
+                    (H.ul ! HA.id "blog-links") $ for_ posts' \(post, (title, _, _)) ->
+                        H.li $ H.a (H.text title) ! HA.href (H.stringValue $ "/" </> htmlInToOut' post)
             _ -> do
                 let inFile = inDir </> htmlOutToIn (pc </> "index.html")
                 need [inFile]
-                (content, localLinks) <- pandocStuff inFile
+                (title, content, localLinks) <- pandocStuff inFile
                 need localLinks
-                pure (T.pack $ mapHead toUpper $ takeBaseName inFile, Just content)
+                pure (title, Just content)
         let noDep p' =
                 -- TODO this is a bit of a hack
                 -- we can't make every page that uses the sidebar depend on all of its link targets
@@ -394,8 +396,3 @@ addSubmoduleOracle = addOracle $ \(Submodule p) ->
         (,)
             <$> (fromStdout <$> command [Cwd p] "git" ["rev-parse", "HEAD"])
             <*> (fromStdout <$> command [Cwd p] "git" ["diff"])
-
-mapHead :: (a -> a) -> [a] -> [a]
-mapHead f = \case
-    [] -> []
-    x : xs -> f x : xs
