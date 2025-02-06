@@ -73,8 +73,15 @@ body {
   padding: 1rem 3rem;
   box-sizing: border-box;
   height: 100vh;
+  display: flex;
+  justify-content: center;
   @media (orientation: landscape) {
     overflow-y: scroll;
+  }
+  > * {
+    flex-grow: 1;
+    max-width: 40rem;
+    height: fit-content;
   }
 }
 
@@ -126,7 +133,7 @@ body {
 
 /* Page-specific */
 
-#content.posts {
+#content.posts > * {
   > h1 {
     margin-bottom: 0;
   }
