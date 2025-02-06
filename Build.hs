@@ -320,7 +320,7 @@ addDocHead title body = do
     pure $ H.docTypeHtml do
         H.head do
             H.meta ! HA.charset "UTF-8"
-            H.title . H.text $ "George Thomas" <> mwhen (not $ T.null title) " - " <> title
+            H.title . H.text $ title <> mwhen (not $ T.null title) " - " <> "George Thomas"
             for_ stylesheets \s -> H.link ! HA.rel "stylesheet" ! HA.href (H.stringValue $ "/" </> s)
         H.body body
   where
