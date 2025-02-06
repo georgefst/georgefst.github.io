@@ -169,11 +169,10 @@ main = shakeArgs shakeOpts do
                         "posts/dummy-post-2.md" -> "Post 2"
                         "posts/dummy-post-3.md" -> "Post 3"
                         _ -> ""
-                pure $
-                    Just do
-                        H.h1 "Blog"
-                        for_ posts \post ->
-                            H.li $ H.a (name post) ! HA.href (H.stringValue $ "/" </> htmlInToOut' post)
+                pure $ Just do
+                    H.h1 "Blog"
+                    for_ posts \post ->
+                        H.li $ H.a (name post) ! HA.href (H.stringValue $ "/" </> htmlInToOut' post)
             _ -> do
                 let inFile = inDir </> htmlOutToIn (pc </> "index.html")
                 need [inFile]
