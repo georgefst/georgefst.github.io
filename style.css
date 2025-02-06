@@ -127,38 +127,38 @@ body {
 /* Page-specific */
 
 #content.portfolio {
-#monpad-grid {
-  background-color: var(--blue-medium);
-  display: grid;
-  grid-template-columns: 50% 50%;
-  grid-template-rows: 50% 50%;
-  height: 30rem;
-  #monpad {
-    width: 100%;
-    height: 100%;
-  }
-  #monpad-buttons {
-    display: flex;
-    flex-direction: column;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 1.5rem;
-    padding: 1.5rem;
-    overflow: scroll;
-  }
-  .wrapper:has(> #monpad-layout) {
-    background-color: var(--blue-light);
-    overflow: scroll;
-    > * {
-      margin: 1rem;
+  #monpad-grid {
+    background-color: var(--blue-medium);
+    display: grid;
+    grid-template-columns: 50% 50%;
+    grid-template-rows: 50% 50%;
+    height: 30rem;
+    #monpad {
+      width: 100%;
+      height: 100%;
+    }
+    #monpad-buttons {
+      display: flex;
+      flex-direction: column;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 1.5rem;
+      padding: 1.5rem;
+      overflow: scroll;
+    }
+    .wrapper:has(> #monpad-layout) {
+      background-color: var(--blue-light);
+      overflow: scroll;
+      > * {
+        margin: 1rem;
+      }
+    }
+    .wrapper:has(> #monpad-output) {
+      overflow-x: scroll;
+      overflow-y: hidden;
+      > * {
+        margin: 1rem;
+      }
     }
   }
-  .wrapper:has(> #monpad-output) {
-    overflow-x: scroll;
-    overflow-y: hidden;
-    > * {
-      margin: 1rem;
-    }
-  }
-}
 }
