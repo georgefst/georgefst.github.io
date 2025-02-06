@@ -228,7 +228,14 @@ shakeOpts =
 pandocReaderOpts :: ReaderOptions
 pandocReaderOpts =
     def
-        { readerExtensions = enableExtension Ext_raw_html $ readerExtensions def
+        { readerExtensions =
+            foldr
+                enableExtension
+                (readerExtensions def)
+                [ Ext_raw_html
+                , Ext_footnotes
+                , Ext_inline_notes
+                ]
         }
 
 data MonpadLayout = MonpadLayout
