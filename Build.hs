@@ -158,26 +158,28 @@ main = shakeArgs shakeOpts do
 
     pandocStuff <- newCache \inFile -> liftIO $ runIOorExplode do
         doc <- readMarkdown pandocReaderOpts =<< liftIO (T.readFile inFile)
-        let (content, localLinks) = runWriter $ doc & walkM \case
-                RawBlock format t -> do
-                    tell $
-                        parseTags t & mapMaybe \case
-                            TagOpen _ as ->
-                                find ((== "src") . fst) as <&> \(_, src) ->
-                                    outDir </> T.unpack (T.dropWhile (== '/') $ T.takeWhile (/= '?') src)
-                            _ -> Nothing
-                    pure $ RawBlock format t
-                block ->
-                    block & walkM \case
-                        Link attrs inlines (url@(T.unpack -> url'), target) ->
-                            Link attrs inlines . (,target)
-                                <$> if takeExtension (T.unpack url) == ".md"
-                                    then do
-                                        tell [outDir </> htmlInToOut url']
-                                        pure $ T.pack $ htmlInToOut' url'
-                                    else
-                                        pure url
-                        x -> pure x
+        let (content, localLinks) =
+                runWriter $
+                    doc & walkM \case
+                        RawBlock format t -> do
+                            tell $
+                                parseTags t & mapMaybe \case
+                                    TagOpen _ as ->
+                                        find ((== "src") . fst) as <&> \(_, src) ->
+                                            outDir </> T.unpack (T.dropWhile (== '/') $ T.takeWhile (/= '?') src)
+                                    _ -> Nothing
+                            pure $ RawBlock format t
+                        block ->
+                            block & walkM \case
+                                Link attrs inlines (url@(T.unpack -> url'), target) ->
+                                    Link attrs inlines . (,target)
+                                        <$> if takeExtension (T.unpack url) == ".md"
+                                            then do
+                                                tell [outDir </> htmlInToOut url']
+                                                pure $ T.pack $ htmlInToOut' url'
+                                            else
+                                                pure url
+                                x -> pure x
         contentHtml <- writeHtml5 def content
         pure (contentHtml, localLinks)
 
