@@ -214,7 +214,7 @@ main = shakeArgs shakeOpts do
                 -- the answer _might_ just be to stop being clever and always compile all HTML files
                 not (null pc)
                     || null p' -- avoids trivial recursion
-        liftIO . TL.writeFile p . renderHtml =<< addDocHead title =<< addCommonHtml noDep contents
+        liftIO . TL.writeFile p . renderHtml =<< addDocHead title =<< addCommonHtml noDep ((,T.pack pc) <$> contents)
 
 shakeOpts :: ShakeOptions
 shakeOpts =
@@ -326,7 +326,7 @@ addDocHead title body = do
   where
     stylesheets = [stylesheet, stylesheetClay]
 
-addCommonHtml :: (FilePath -> Bool) -> Maybe Html -> Action Html
+addCommonHtml :: (FilePath -> Bool) -> Maybe (Html, Text) -> Action Html
 addCommonHtml noDep body = do
     need [outDir </> profilePic]
     need $ links & mapMaybe \(p, _) -> guard (not $ noDep p) $> (outDir </> p </> "index.html")
@@ -336,7 +336,7 @@ addCommonHtml noDep body = do
             sequence_ $
                 links <&> \(p, t) ->
                     H.a (H.string t) ! HA.href (H.stringValue ("/" <> p)) ! HA.class_ "button-link"
-        body & foldMap \b -> H.div b ! HA.id "content"
+        body & foldMap \(b, t) -> H.div b ! HA.id "content" ! HA.class_ (H.textValue $ T.dropWhileEnd (== '/') t)
   where
     links =
         [ ("posts", "Blog")

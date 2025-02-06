@@ -126,6 +126,7 @@ body {
 
 /* Page-specific */
 
+#content.portfolio {
 #monpad-grid {
   background-color: var(--blue-medium);
   display: grid;
@@ -159,4 +160,5 @@ body {
       margin: 1rem;
     }
   }
+}
 }
