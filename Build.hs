@@ -61,6 +61,7 @@ import Data.Text (Text)
 import Data.Text qualified as T
 import Data.Text.IO qualified as T
 import Data.Text.Lazy.IO qualified as TL
+import Data.Traversable
 import Data.Tuple.Extra
 import Data.Typeable
 import Development.Shake
@@ -155,53 +156,59 @@ main = shakeArgs shakeOpts do
         let layout = fromMaybe (error $ "unknown Monpad layout: " <> p) $ Map.lookup (takeBaseName p) monpadLayouts
          in copyFileChanged ("./monpad/dhall/" <> layout.path <.> "dhall") p
 
+    pandocStuff <- newCache \inFile -> liftIO $ runIOorExplode do
+        doc <- readMarkdown pandocReaderOpts =<< liftIO (T.readFile inFile)
+        let title = case doc of
+                Pandoc _ (Header 1 _ h : _) ->
+                    mconcat $
+                        h & mapMaybe \case
+                            Str s -> Just s
+                            Space -> Just " "
+                            _ -> Nothing
+                _ -> error $ "no top-level header in input: " <> inFile
+        let (content, localLinks) =
+                runWriter $
+                    doc & walkM \case
+                        RawBlock format t -> do
+                            tell $
+                                parseTags t & mapMaybe \case
+                                    TagOpen _ as ->
+                                        find ((== "src") . fst) as <&> \(_, src) ->
+                                            outDir </> T.unpack (T.dropWhile (== '/') $ T.takeWhile (/= '?') src)
+                                    _ -> Nothing
+                            pure $ RawBlock format t
+                        block ->
+                            block & walkM \case
+                                Link attrs inlines (url@(T.unpack -> url'), target) ->
+                                    Link attrs inlines . (,target)
+                                        <$> if takeExtension (T.unpack url) == ".md"
+                                            then do
+                                                tell [outDir </> htmlInToOut url']
+                                                pure $ T.pack $ htmlInToOut' url'
+                                            else
+                                                pure url
+                                x -> pure x
+        contentHtml <- writeHtml5 def content
+        pure (title, contentHtml, localLinks)
+
     (outDir <//> "index.html") *%> \p (pc :! EmptyList) -> do
         need [outDir </> favicon]
-        contents <- case pc of
-            "" -> pure Nothing
+        (title, contents) <- case pc of
+            "" -> pure ("", Nothing)
             "posts/" -> do
                 posts <- getDirectoryFiles inDir ["posts" </> "*" <.> "md"]
                 need $ posts <&> \w -> outDir </> htmlInToOut w
-                -- TODO get name from initial h1?
-                -- how? output it from Pandoc step somehow with custom Shake rule?
-                let name = \case
-                        "posts/dummy-post-1.md" -> "Post 1"
-                        "posts/dummy-post-2.md" -> "Post 2"
-                        "posts/dummy-post-3.md" -> "Post 3"
-                        _ -> ""
-                pure $
-                    Just do
-                        H.h1 "Blog"
-                        for_ posts \post ->
-                            H.li $ H.a (name post) ! HA.href (H.stringValue $ "/" </> htmlInToOut' post)
+                posts' <- for posts \post -> (post,) <$> pandocStuff (inDir </> post)
+                pure . ("Blog",) $ Just do
+                    H.h1 "Blog"
+                    (H.ul ! HA.id "blog-links") $ for_ posts' \(post, (title, _, _)) ->
+                        H.li $ H.a (H.text title) ! HA.href (H.stringValue $ "/" </> htmlInToOut' post)
             _ -> do
                 let inFile = inDir </> htmlOutToIn (pc </> "index.html")
                 need [inFile]
-                (content, localLinks) <- liftIO $ runIOorExplode do
-                    doc <- readMarkdown pandocReaderOpts =<< liftIO (T.readFile inFile)
-                    firstM (writeHtml5 def) . runWriter $
-                        doc & walkM \case
-                            RawBlock format t -> do
-                                tell $
-                                    parseTags t & mapMaybe \case
-                                        TagOpen _ as ->
-                                            find ((== "src") . fst) as <&> \(_, src) ->
-                                                outDir </> T.unpack (T.dropWhile (== '/') $ T.takeWhile (/= '?') src)
-                                        _ -> Nothing
-                                pure $ RawBlock format t
-                            block ->
-                                block & walkM \case
-                                    Link attrs inlines (url@(T.unpack -> url'), target) ->
-                                        Link attrs inlines . (,target)
-                                            <$> if takeExtension (T.unpack url) == ".md"
-                                                then do
-                                                    tell [outDir </> htmlInToOut url']
-                                                    pure $ T.pack $ htmlInToOut' url'
-                                                else
-                                                    pure url
-                                    x -> pure x
+                (title, content, localLinks) <- pandocStuff inFile
                 need localLinks
-                pure $ Just content
+                pure (title, Just content)
         let noDep p' =
                 -- TODO this is a bit of a hack
                 -- we can't make every page that uses the sidebar depend on all of its link targets
@@ -214,7 +221,7 @@ main = shakeArgs shakeOpts do
                 -- the answer _might_ just be to stop being clever and always compile all HTML files
                 not (null pc)
                     || null p' -- avoids trivial recursion
-        liftIO . TL.writeFile p . renderHtml =<< addDocHead "" =<< addCommonHtml noDep contents
+        liftIO . TL.writeFile p . renderHtml =<< addDocHead title =<< addCommonHtml noDep ((,T.pack pc) <$> contents)
 
 shakeOpts :: ShakeOptions
 shakeOpts =
@@ -228,7 +235,14 @@ shakeOpts =
 pandocReaderOpts :: ReaderOptions
 pandocReaderOpts =
     def
-        { readerExtensions = enableExtension Ext_raw_html $ readerExtensions def
+        { readerExtensions =
+            foldr
+                enableExtension
+                (readerExtensions def)
+                [ Ext_raw_html
+                , Ext_footnotes
+                , Ext_inline_notes
+                ]
         }
 
 data MonpadLayout = MonpadLayout
@@ -312,13 +326,14 @@ addDocHead title body = do
     need $ map (outDir </>) stylesheets
     pure $ H.docTypeHtml do
         H.head do
-            H.title . H.text $ "George Thomas" <> mwhen (not $ T.null title) " - " <> title
+            H.meta ! HA.charset "UTF-8"
+            H.title . H.text $ title <> mwhen (not $ T.null title) " | " <> "George Thomas"
             for_ stylesheets \s -> H.link ! HA.rel "stylesheet" ! HA.href (H.stringValue $ "/" </> s)
         H.body body
   where
     stylesheets = [stylesheet, stylesheetClay]
 
-addCommonHtml :: (FilePath -> Bool) -> Maybe Html -> Action Html
+addCommonHtml :: (FilePath -> Bool) -> Maybe (Html, Text) -> Action Html
 addCommonHtml noDep body = do
     need [outDir </> profilePic]
     need $ links & mapMaybe \(p, _) -> guard (not $ noDep p) $> (outDir </> p </> "index.html")
@@ -328,7 +343,7 @@ addCommonHtml noDep body = do
             sequence_ $
                 links <&> \(p, t) ->
                     H.a (H.string t) ! HA.href (H.stringValue ("/" <> p)) ! HA.class_ "button-link"
-        body & foldMap \b -> H.div b ! HA.id "content"
+        body & foldMap \(b, t) -> H.div (H.div b) ! HA.id "content" ! HA.class_ (H.textValue $ T.dropWhileEnd (== '/') t)
   where
     links =
         [ ("posts", "Blog")
@@ -336,7 +351,7 @@ addCommonHtml noDep body = do
         , ("work", "Hire me!")
         ]
 
--- TODO do this in Haskell?
+-- TODO do this in Haskell, e.g. with `JuicyPixels-extra`?
 magick :: [String] -> FilePath -> FilePath -> Action ()
 magick c i o = command_ [] "magick" ([i] <> c <> [o])
 
