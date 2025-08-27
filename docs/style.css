@@ -132,6 +132,30 @@ body {
   }
 }
 
+#under-construction {
+  --banner-height: 4rem;
+  position: absolute;
+  bottom: 0;
+  height: var(--banner-height);
+  width: 100%;
+  background: repeating-linear-gradient(
+    -45deg,
+    yellow,
+    yellow var(--banner-height),
+    black var(--banner-height),
+    black calc(var(--banner-height) * 2)
+  );
+  text-align: center;
+  line-height: var(--banner-height);
+  font-size: xx-large;
+  --shadow: 0.08rem;
+  --shadow-: calc(-1 * var(--shadow));
+  text-shadow: black var(--shadow) var(--shadow),
+    black var(--shadow-) var(--shadow-), black var(--shadow) var(--shadow-),
+    black var(--shadow-) var(--shadow);
+  font-weight: bold;
+}
+
 /* Page-specific */
 
 #content.posts > * {
