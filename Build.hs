@@ -80,20 +80,21 @@ import Text.Pandoc.Walk
 
 main :: IO ()
 main = shakeArgs shakeOpts do
-    want [rootHtml]
 
     mediaFiles <- liftIO $ map (mediaDir </>) <$> listDirectory mediaDir
-    want $ map (outDir </>) mediaFiles
     (outDir </> mediaDir </> "*") *%> \dest (f :! EmptyList) -> do
         liftIO $ createDirectoryIfMissing True $ outDir </> mediaDir
         copyFileChanged (mediaDir </> f) dest
+
+    let wanted = rootHtml : map (outDir </>) mediaFiles
+    want wanted
 
     getSubmoduleState <- addSubmoduleOracle
 
     "release" ~> do
         alwaysRerun
         liftIO $ removeDirectoryRecursive outDir
-        need [rootHtml]
+        need wanted
         Stdout originalBranch <- cmd ("git branch --show-current" :: String)
         liftIO $ putStrLn originalBranch
         either (\e -> liftIO $ putStrLn $ "git command failed: " <> show e) pure =<< runExceptT do
