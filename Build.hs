@@ -22,6 +22,7 @@ build-depends:
     shake,
     tagsoup,
     text,
+    time,
 -}
 {-# LANGUAGE GHC2021 #-}
 {-# LANGUAGE BlockArguments #-}
@@ -61,9 +62,9 @@ import Data.Text (Text)
 import Data.Text qualified as T
 import Data.Text.IO qualified as T
 import Data.Text.Lazy.IO qualified as TL
+import Data.Time
 import Data.Traversable
 import Data.Tuple.Extra
-import Data.Typeable
 import Development.Shake
 import NeatInterpolation
 import System.Directory
@@ -74,12 +75,18 @@ import Text.Blaze.Html.Renderer.Text (renderHtml)
 import Text.Blaze.Html5 qualified as H
 import Text.Blaze.Html5.Attributes qualified as HA
 import Text.HTML.TagSoup
-import Text.Pandoc
+import Text.Pandoc hiding (getCurrentTime, getCurrentTimeZone)
 import Text.Pandoc.Walk
 
 main :: IO ()
 main = shakeArgs shakeOpts do
     want [rootHtml]
+
+    mediaFiles <- liftIO $ map (mediaDir </>) <$> listDirectory mediaDir
+    want $ map (outDir </>) mediaFiles
+    (outDir </> mediaDir </> "*") *%> \dest (f :! EmptyList) -> do
+        liftIO $ createDirectoryIfMissing True $ outDir </> mediaDir
+        copyFileChanged (mediaDir </> f) dest
 
     getSubmoduleState <- addSubmoduleOracle
 
@@ -197,12 +204,29 @@ main = shakeArgs shakeOpts do
             "" -> pure ("", Nothing)
             "posts/" -> do
                 posts <- getDirectoryFiles inDir ["posts" </> "*" <.> "md"]
+                draftPosts <- getDirectoryFiles inDir ["posts" </> "drafts" </> "*" <.> "md"]
                 need $ posts <&> \w -> outDir </> htmlInToOut w
-                posts' <- for posts \post -> (post,) <$> pandocStuff (inDir </> post)
+                need $ draftPosts <&> \w -> outDir </> htmlInToOut w
+                posts' <- for posts \post ->
+                    (post,,)
+                        <$> pandocStuff (inDir </> post)
+                        <*> ( maybe "unknown date" (formatTime defaultTimeLocale "%d/%m/%Y" . localDay)
+                                . runReadS
+                                . readSTime True defaultTimeLocale "%a %b %e %H:%M:%S %Y %z"
+                                . fromStdout
+                                <$> command [] "git" ["log", "--diff-filter=A", "--format=%ad", "--", inDir </> post]
+                            )
+                draftPosts' <- for draftPosts \post -> (post,) <$> pandocStuff (inDir </> post)
                 pure . ("Blog",) $ Just do
                     H.h1 "Blog"
-                    (H.ul ! HA.id "blog-links") $ for_ posts' \(post, (title, _, _)) ->
-                        H.li $ H.a (H.text title) ! HA.href (H.stringValue $ "/" </> htmlInToOut' post)
+                    (H.ul ! HA.id "blog-links") do
+                        for_ posts' \(post, (title, _, _), date) -> H.li do
+                            H.a (H.text title) ! HA.href (H.stringValue $ "/" </> htmlInToOut' post)
+                            H.span $ H.string date
+                    when (not $ null draftPosts') $ H.h2 "Drafts"
+                    (H.ul ! HA.id "blog-links-draft") do
+                        for_ draftPosts' \(post, (title, _, _)) ->
+                            H.li $ H.a (H.text title) ! HA.href (H.stringValue $ "/" </> htmlInToOut' post)
             _ -> do
                 let inFile = inDir </> htmlOutToIn (pc </> "index.html")
                 need [inFile]
@@ -280,6 +304,8 @@ inDir :: FilePath
 inDir = "./content"
 outDir :: FilePath
 outDir = "./dist"
+mediaDir :: FilePath
+mediaDir = "media"
 rootHtml :: FilePath
 rootHtml = outDir </> "index.html"
 stylesheet :: FilePath
@@ -340,15 +366,13 @@ addCommonHtml noDep body = do
     pure do
         (H.div ! HA.id "sidebar") do
             H.a (H.img ! HA.src (H.stringValue $ "/" </> profilePic)) ! HA.href "/" ! HA.id "home-image"
-            sequence_ $
-                links <&> \(p, t) ->
-                    H.a (H.string t) ! HA.href (H.stringValue ("/" <> p)) ! HA.class_ "button-link"
+            for_ links \(p, t) ->
+                H.a (H.string t) ! HA.href (H.stringValue ("/" <> p)) ! HA.class_ "button-link"
         body & foldMap \(b, t) -> H.div (H.div b) ! HA.id "content" ! HA.class_ (H.textValue $ T.dropWhileEnd (== '/') t)
   where
     links =
         [ ("posts", "Blog")
         , ("portfolio", "Portfolio")
-        , ("work", "Hire me!")
         ]
 
 -- TODO do this in Haskell, e.g. with `JuicyPixels-extra`?
@@ -383,16 +407,21 @@ adjustHSL ::
     Colour Double
 adjustHSL fh fs fl c = let (h, s, l) = hslView $ toSRGB c in uncurryRGB sRGB $ hsl (fh h) (fs s) (fl l)
 adjustLightness :: (Double -> Double) -> Colour Double -> Colour Double
-adjustLightness f = adjustHSL id id f
+adjustLightness = adjustHSL id id
 lighten :: Double -> Colour Double -> Colour Double
 lighten x = adjustLightness (\l -> l + (1 - l) * x)
 
 -- TODO turn this in to a library?
-newtype Submodule = Submodule FilePath deriving newtype (Eq, Ord, Show, Typeable, NFData, Hashable, Binary)
+newtype Submodule = Submodule FilePath deriving newtype (Eq, Ord, Show, NFData, Hashable, Binary)
 type instance RuleResult Submodule = (String, String)
 addSubmoduleOracle :: Rules (Submodule -> Action (String, String))
 addSubmoduleOracle = addOracle $ \(Submodule p) ->
     quietly $
-        (,)
-            <$> (fromStdout <$> command [Cwd p] "git" ["rev-parse", "HEAD"])
-            <*> (fromStdout <$> command [Cwd p] "git" ["diff"])
+        curry (both fromStdout)
+            <$> command [Cwd p] "git" ["rev-parse", "HEAD"]
+            <*> command [Cwd p] "git" ["diff"]
+
+runReadS :: [(a, b)] -> Maybe a
+runReadS = \case
+    [(r, _)] -> Just r
+    _ -> Nothing

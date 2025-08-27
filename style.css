@@ -139,9 +139,15 @@ body {
     margin-bottom: 0;
   }
   > #blog-links {
+    font-size: large;
+    > li > *:last-child {
+      float: right;
+      font-size: medium;
+    }
+  }
+  > #blog-links,
+  #blog-links-draft {
     > li {
-      text-align: left;
-      font-size: large;
       padding: 0.5rem;
     }
   }
