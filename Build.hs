@@ -366,6 +366,7 @@ addCommonHtml noDep body = do
     need [outDir </> profilePic]
     need $ links & mapMaybe \(p, _) -> guard (not $ noDep p) $> (outDir </> p </> "index.html")
     pure do
+        (H.div ! HA.id "under-construction") $ H.text "Under construction!"
         (H.div ! HA.id "sidebar") do
             H.a (H.img ! HA.src (H.stringValue $ "/" </> profilePic)) ! HA.href "/" ! HA.id "home-image"
             for_ links \(p, t) ->
