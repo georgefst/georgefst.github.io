@@ -92,6 +92,7 @@ main = shakeArgs shakeOpts do
 
     "release" ~> do
         alwaysRerun
+        liftIO $ removeDirectoryRecursive outDir
         need [rootHtml]
         Stdout originalBranch <- cmd ("git branch --show-current" :: String)
         liftIO $ putStrLn originalBranch
