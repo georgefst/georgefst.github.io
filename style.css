@@ -48,8 +48,17 @@ a.button-link {
   padding: 0.5rem 1rem;
   box-sizing: border-box;
   background-color: var(--blue-light);
+}
+#sidebar button,
+#sidebar a.button-link {
   &:hover {
     background-color: var(--blue-dark);
+  }
+}
+#content button,
+#content a.button-link {
+  &:hover {
+    background-color: var(--blue-medium);
   }
 }
 

@@ -80,7 +80,6 @@ import Text.Pandoc.Walk
 
 main :: IO ()
 main = shakeArgs shakeOpts do
-
     mediaFiles <- liftIO $ map (mediaDir </>) <$> listDirectory mediaDir
     (outDir </> mediaDir </> "*") *%> \dest (f :! EmptyList) -> do
         liftIO $ createDirectoryIfMissing True $ outDir </> mediaDir
@@ -145,12 +144,13 @@ main = shakeArgs shakeOpts do
 
     (outDir </> "monpad.html") %> \_ -> do
         _ <- getSubmoduleState $ Submodule "monpad"
+        -- TODO we may wish to return to calling `./build.sh` once that works on NixOS
         command_
             [Cwd "monpad"]
-            "./build.sh"
-            []
+            "nix"
+            ["build", ".#monpad:exe:monpad"]
         need $ Map.keys monpadLayouts <&> \layout -> monpadLayoutDir </> layout <.> "dhall"
-        command_ [] "./monpad/dist/monpad" $
+        command_ [] "./monpad/result/bin/monpad" $
             [ "dump-html"
             , "--no-ws"
             , "--login"
@@ -193,7 +193,9 @@ main = shakeArgs shakeOpts do
                                         <$> if takeExtension (T.unpack url) == ".md"
                                             then do
                                                 tell [outDir </> htmlInToOut url']
-                                                pure $ T.pack $ htmlInToOut' url'
+                                                -- TODO prepending slash won't be enough for nested paths,
+                                                -- but it fixes things for bits-and-bobs, which is the only use for now
+                                                pure $ T.pack $ '/' : htmlInToOut' url'
                                             else
                                                 pure url
                                 x -> pure x
@@ -376,6 +378,7 @@ addCommonHtml noDep body = do
     links =
         [ ("posts", "Blog")
         , ("portfolio", "Portfolio")
+        , ("misc", "Misc")
         ]
 
 -- TODO do this in Haskell, e.g. with `JuicyPixels-extra`?
