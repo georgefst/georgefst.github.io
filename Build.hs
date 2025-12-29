@@ -90,6 +90,9 @@ main = shakeArgs shakeOpts do
 
     getSubmoduleState <- addSubmoduleOracle
 
+    -- TODO requires one-time setup on each dev machine:
+    -- git remote add github.io git@github.com:georgefst/georgefst.github.io.git
+    -- git branch --no-track release github.io/georgefst.com
     "release" ~> do
         alwaysRerun
         liftIO $ removeDirectoryRecursive outDir
